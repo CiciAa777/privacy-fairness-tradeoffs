@@ -1,0 +1,17 @@
+{
+  "seed": 285,
+  "hidden_sizes": [64, 32],
+  "epochs": 20,
+  "batch_size": 512,
+  "learning_rate": 0.05,
+  "momentum": 0.0,
+  "threshold": 0.5,
+  "cpu_threads": 4,
+  "target_epsilons": [1.0, 4.0, 8.0],
+  "delta_rule": "1 / (10 * n_train)",
+  "max_grad_norm": 1.0,
+  "accountant": "rdp",
+  "poisson_sampling": true,
+  "secure_mode": false,
+  "output_dir": "results/dp_pilot"
+}

@@ -39,12 +39,14 @@ Read [proposal.md](proposal.md) for the research questions, exact dataset/featur
 
 ## November 17: DP-SGD pilots
 
-9. [ ] Integrate Opacus and validate the model. Run a short smoke experiment before the pilots.
-10. [ ] Run epsilon 1, 4, and 8 with one seed and fixed training duration; record achieved budgets and all privacy-accounting settings.
-11. [ ] Evaluate with the same metric code on development data. Compare each group's accuracy loss against the ordinary model.
-12. [ ] Save logs, predictions, configurations, and runtimes. Estimate the cost of the main grid.
+9. [x] Integrate Opacus and validate the model. Run a short smoke experiment before the pilots.
+10. [x] Run epsilon 1, 4, and 8 with one seed and fixed training duration; record achieved budgets and all privacy-accounting settings.
+11. [x] Evaluate with the same metric code on development data. Compare each group's accuracy loss against the ordinary model.
+12. [x] Save logs, predictions, configurations, and runtimes. Estimate the cost of the main grid.
 
 **Done:** reproducible preliminary private/non-private comparisons. Keep final test outcomes unavailable.
+
+**Completed early on Nov 16:** all three 20-epoch pilots. See [DP training log](dp_training_log.md) and [notebook 03](notebooks/03_dp_sgd.ipynb). One run per budget; test outcomes remain reserved.
 
 ## November 18: progress report
 
@@ -59,7 +61,7 @@ Read [proposal.md](proposal.md) for the research questions, exact dataset/featur
 
 17. [ ] Wrap the frozen MLP to expose positive-class scores and fit EO on the calibration set.
 18. [ ] Run sex-targeted and race-targeted EO, including ordinary-model controls. Audit both attributes for every output.
-19. [ ] Record prediction-randomization seeds, calibration support, and variation in development results.
+19. [x] Record prediction-randomization seeds, calibration support, and variation in development results.
 
 **Nov 22–24: Learning Fair Representations**
 
@@ -82,7 +84,7 @@ Read [proposal.md](proposal.md) for the research questions, exact dataset/featur
 
 27. [ ] Evaluate frozen models on test data. Report seed means/standard deviations and selected paired uncertainty intervals where feasible.
 28. [ ] Compare group accuracy losses, both EO components, independence, and binary sufficiency. Check whether smaller gaps accompany improved group performance or prediction collapse.
-29. [ ] Produce accuracy-versus-epsilon, fairness-versus-epsilon, group-loss, and accuracy–fairness plots. Label targeted attributes, cohorts, non-private references, and variability.
+29. [x] Produce accuracy-versus-epsilon, fairness-versus-epsilon, group-loss, and accuracy–fairness plots. Label targeted attributes, cohorts, non-private references, and variability.
 30. [ ] Answer all research questions, including null/mixed findings. Discuss base rates, small groups, observational interpretation, and privacy/data-scope limitations.
 
 ## December 4–7: final report

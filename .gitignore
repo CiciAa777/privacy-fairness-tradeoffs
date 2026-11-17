@@ -7,3 +7,4 @@ __pycache__/
 .ipython/
 *.pt
 results/baseline/development_predictions.csv
+results/dp_pilot/**/development_predictions.csv

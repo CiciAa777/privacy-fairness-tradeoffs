@@ -15,6 +15,17 @@ from .metrics import evaluate
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def make_model(input_dimension, hidden_sizes):
+    """Shared architecture for ordinary SGD and DP-SGD."""
+    layers = []
+    width = input_dimension
+    for hidden in hidden_sizes:
+        layers.extend([nn.Linear(width, hidden), nn.ReLU()])
+        width = hidden
+    layers.append(nn.Linear(width, 1))
+    return nn.Sequential(*layers)
+
+
 def train(config_path=None):
     config_path = Path(config_path) if config_path else ROOT/'configs/baseline.json'
     config = json.loads(config_path.read_text())
@@ -36,12 +47,7 @@ def train(config_path=None):
     generator = torch.Generator().manual_seed(seed)
     loader = DataLoader(TensorDataset(tensors['train'], y), batch_size=config['batch_size'],
                         shuffle=True, generator=generator)
-    layers = []
-    width = manifest['encoded_dimension']
-    for hidden in config['hidden_sizes']:
-        layers.extend([nn.Linear(width, hidden), nn.ReLU()]); width=hidden
-    layers.append(nn.Linear(width,1))
-    model = nn.Sequential(*layers)
+    model = make_model(manifest['encoded_dimension'], config['hidden_sizes'])
     optimizer = torch.optim.SGD(model.parameters(), lr=config['learning_rate'], momentum=config['momentum'])
     loss_fn = nn.BCEWithLogitsLoss()
     history=[]; start=time.perf_counter()

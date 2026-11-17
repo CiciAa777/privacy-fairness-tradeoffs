@@ -1,0 +1,98 @@
+{
+  "scope": "single-run development pilot; not final test results",
+  "target_epsilon": 4.0,
+  "epsilon": 3.999411429217509,
+  "delta": 6.608511763150938e-07,
+  "accountant": "rdp",
+  "noise_multiplier": 0.740509033203125,
+  "max_grad_norm": 1.0,
+  "sampling": "Poisson",
+  "sample_rate": 0.0033783783783783786,
+  "expected_batch_size": 511,
+  "steps": 5920,
+  "accounted_steps": 5920,
+  "epochs": 20,
+  "secure_mode": false,
+  "randomness": "Fixed model initialization seed; independent sampling/noise seeds are not exported. Research RNG, not cryptographically hardened.",
+  "privacy_scope": "Model-training records only, conditional on fixed public auxiliary partitions and preprocessing. Per-run accountant estimate; runs compose.",
+  "training_statistics": "No raw training losses/gradient statistics exported",
+  "overall": {
+    "n": 30264,
+    "tp": 15328,
+    "tn": 7616,
+    "fp": 5396,
+    "fn": 1924,
+    "accuracy": 0.7581284694686756,
+    "balanced_accuracy": 0.736891284928521,
+    "positive_rate": 0.5700502246893999,
+    "selection_rate": 0.6847739888977002,
+    "tpr": 0.888476698353814,
+    "fpr": 0.41469412849677223,
+    "ppv": 0.7396255549121791,
+    "npv": 0.7983228511530398,
+    "min_conditional_count": 9540
+  },
+  "gaps": {
+    "RAC1P": {
+      "accuracy_gap": 0.32178217821782173,
+      "independence": 0.7717490148529857,
+      "tpr_gap": null,
+      "fpr_gap": 0.5388679245283019,
+      "separation": null,
+      "ppv_gap": null,
+      "npv_gap": 0.21391872956562352,
+      "sufficiency": null
+    },
+    "RAC1P_SEX": {
+      "accuracy_gap": 0.33431430253090055,
+      "independence": 0.7786933490288405,
+      "tpr_gap": null,
+      "fpr_gap": 0.6188118811881188,
+      "separation": null,
+      "ppv_gap": null,
+      "npv_gap": 0.2857142857142857,
+      "sufficiency": null
+    },
+    "SEX": {
+      "accuracy_gap": 0.07325058776115678,
+      "independence": 0.009051964833787118,
+      "tpr_gap": 0.00429472154428745,
+      "fpr_gap": 0.11506366595156331,
+      "separation": 0.11506366595156331,
+      "ppv_gap": 0.12161154572269628,
+      "npv_gap": 0.03339610258667802,
+      "sufficiency": 0.12161154572269628
+    }
+  },
+  "seconds": 78.73706259997562,
+  "input_dimension": 77,
+  "manifest_sha256": "b8617b0669b75b8c3db9ebe2eefdc59110dfc2caee82c90326fe626af0a44fc7",
+  "torch_version": "2.13.0+cpu",
+  "opacus_version": "1.6.0",
+  "config": {
+    "seed": 285,
+    "hidden_sizes": [
+      64,
+      32
+    ],
+    "epochs": 20,
+    "batch_size": 512,
+    "learning_rate": 0.05,
+    "momentum": 0.0,
+    "threshold": 0.5,
+    "cpu_threads": 4,
+    "target_epsilons": [
+      1.0,
+      4.0,
+      8.0
+    ],
+    "delta_rule": "1 / (10 * n_train)",
+    "max_grad_norm": 1.0,
+    "accountant": "rdp",
+    "poisson_sampling": true,
+    "secure_mode": false,
+    "output_dir": "results/dp_pilot"
+  },
+  "selection": "Fixed final epoch; no private-data early stopping",
+  "device": "cpu"
+}
