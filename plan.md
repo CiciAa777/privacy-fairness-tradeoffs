@@ -20,6 +20,32 @@ Read [proposal.md](proposal.md) for the research questions, exact dataset/featur
 | 6. Analysis | Dec 1–3 | Final test results, figures, and findings |
 | 7. Final report | Dec 4–7 | Submission package ready Dec 6; submit by Dec 7 |
 
+## Next priorities: repeated runs and more Folktables tasks
+
+### 1. Repeat the same settings to get more reliable comparisons
+
+**Nov 19–24: repeat the existing pilots alongside intervention development.**
+
+- [ ] Run the ordinary baseline and DP-SGD at epsilon 1, 4, and 8 with at least three independent training runs per setting; aim for five if runtime permits.
+- [ ] Keep the dataset, split assignments, preprocessing, architecture, epochs, and other hyperparameters fixed. Vary training seeds, use fresh randomness for each private run, and match baseline/private runs by model-initialization seed where possible.
+- [ ] Save each run separately with its configuration, training seed, achieved privacy budget, and development accuracy/fairness metrics.
+- [ ] Report the mean and standard deviation across runs for overall accuracy, group accuracy, and fairness gaps. Compute each run's group losses and gaps before averaging; show individual runs or error bars in plots.
+- [ ] Compare the repeated results with the single-run pilots: do the accuracy losses and group differences persist, and are differences between privacy budgets large relative to run-to-run variation? These repeats measure training variation on a fixed split, not uncertainty across different populations or splits.
+
+**Done when:** each pilot setting has at least three runs and an aggregate comparison table/plot. Use the same repetition protocol for the final intervention comparisons.
+
+### 2. Test on additional Folktables tasks
+
+**Nov 25–30: add ACSIncome as the first additional task.** This addresses the proposal feedback and checks whether the employment findings hold for a different prediction target.
+
+- [ ] Add ACSIncome using the same California/year source where applicable. Document its own eligibility filters, target, input features, missingness, and sex/race group support before training; do not reuse ACSEmployment-specific rules automatically.
+- [ ] Prepare reproducible task-specific splits and fit preprocessing on that task's reference data only. Keep final test outcomes reserved until Dec 1–3.
+- [ ] Start with ordinary SGD and DP-SGD at epsilon 1, 4, and 8, with at least three runs per setting. Keep the training protocol comparable, while adapting input dimensions and recording task-specific privacy-accounting settings.
+- [ ] Compare accuracy losses and the same fairness metrics across tasks, with means, standard deviations, and group sample counts. Describe mixed findings rather than assuming the employment result generalizes.
+- [ ] Extend EO/LFR to ACSIncome, or add another Folktables task, if the core repeated comparisons finish in time.
+
+**Done when:** results cover at least ACSEmployment and ACSIncome, with repeated baseline/private comparisons and a documented cross-task analysis. A second task using the same state/year does not establish generalization across states or years.
+
 ## Today: November 16
 
 **Goal: understand our records and evaluation rules, then train one ordinary model.**
@@ -75,7 +101,7 @@ Read [proposal.md](proposal.md) for the research questions, exact dataset/featur
 
 23. [ ] On Nov 25, freeze cohorts, splits, preprocessing, metric/group-support rules, tuning choices, epochs, thresholds, seeds, and intervention settings.
 24. [ ] Write an experiment manifest. Use the six comparison families and privacy settings specified in [the proposal](proposal.md#5-interventions-and-experimental-controls).
-25. [ ] Run at least three training seeds per setting. Reuse raw-model checkpoints for EO and reference-fitted transformations according to the frozen protocol.
+25. [ ] Run at least three training seeds per setting and aggregate per-run results as specified in the next priorities above. Include repeated baseline/DP comparisons on ACSIncome; reuse raw-model checkpoints for EO and reference-fitted transformations according to the frozen protocol.
 26. [ ] Audit missing outputs and failed runs; rerun technical failures consistently. Finish and freeze checkpoints by Nov 30.
 
 **Done:** every run has a configuration, cohort/split identifier, privacy log, predictions, metrics, runtime, and status.
@@ -85,7 +111,7 @@ Read [proposal.md](proposal.md) for the research questions, exact dataset/featur
 27. [ ] Evaluate frozen models on test data. Report seed means/standard deviations and selected paired uncertainty intervals where feasible.
 28. [ ] Compare group accuracy losses, both EO components, independence, and binary sufficiency. Check whether smaller gaps accompany improved group performance or prediction collapse.
 29. [x] Produce accuracy-versus-epsilon, fairness-versus-epsilon, group-loss, and accuracy–fairness plots. Label targeted attributes, cohorts, non-private references, and variability.
-30. [ ] Answer all research questions, including null/mixed findings. Discuss base rates, small groups, observational interpretation, and privacy/data-scope limitations.
+30. [ ] Answer all research questions, including null/mixed findings. Compare findings across ACSEmployment and ACSIncome. Discuss training variability, base rates, small groups, observational interpretation, and privacy/data-scope limitations.
 
 ## December 4–7: final report
 
@@ -102,6 +128,6 @@ Read [proposal.md](proposal.md) for the research questions, exact dataset/featur
 | Main grid is too expensive | Reduce finite epsilon values to 1, 4, and 8; retain three seeds and both intervention families |
 | LFR is slow or unstable | Reduce prototype/tuning grids, cap optimization, and document failures |
 | Small race/intersectional groups | Retain descriptive counts, flag uncertainty, and label any supported-cohort comparison |
-| Schedule slips | Cut second datasets, combined LFR+EO, and extensive tuning first; preserve analysis and writing time |
+| Schedule slips | Cut tasks beyond ACSIncome, combined LFR+EO, and extensive tuning first; prioritize repeated baseline/DP comparisons on two tasks and preserve analysis/writing time |
 
-A second dataset, additional split seeds, combined LFR+EO, ages-18–64 sensitivity analysis, and clipping-only diagnostics are optional extensions after the core experiment is complete.
+Tasks beyond ACSIncome, additional split seeds, combined LFR+EO, ages-18–64 sensitivity analysis, and clipping-only diagnostics are optional extensions after the core experiment is complete. Repeated training runs and the ACSIncome baseline/DP comparison are now planned priorities.
