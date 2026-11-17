@@ -1,0 +1,9 @@
+.venv/
+data/
+__pycache__/
+.ipynb_checkpoints/
+*.joblib
+.jupyter/
+.ipython/
+*.pt
+results/baseline/development_predictions.csv

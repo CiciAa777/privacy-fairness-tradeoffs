@@ -1,0 +1,8 @@
+folktables==0.0.12
+numpy
+pandas
+scipy
+scikit-learn
+nbformat
+nbclient
+ipykernel
