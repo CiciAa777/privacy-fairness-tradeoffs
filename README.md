@@ -13,6 +13,12 @@ We study whether DP-SGD changes employment-prediction accuracy disproportionatel
 
 **Progress report:** November 18, 2026. **Final report:** December 7, 2026.
 
+## Progress report for Overleaf
+
+The LaTeX report by Xiyin Xu and Shannon Saad is ready as a standalone [Overleaf ZIP](output/overleaf/progress_report_overleaf.zip), with a compiled [PDF preview](output/pdf/progress_report.pdf). In Overleaf, choose **New Project → Upload Project**, upload the ZIP, and compile `main.tex` using **pdfLaTeX**.
+
+Editable sources are in [reports/progress_report](reports/progress_report/README.md). Rebuild the PDF and ZIP with `python scripts/build_progress_report.py` when TeX Live/MiKTeX is installed. The original partner Markdown draft and plots are preserved.
+
 Recommended workflow:
 
 1. Agree on definitions in the proposal and check them against a data-audit notebook.

@@ -8,3 +8,5 @@ __pycache__/
 *.pt
 results/baseline/development_predictions.csv
 results/dp_pilot/**/development_predictions.csv
+reports/progress_report/build/
+/tmp/
