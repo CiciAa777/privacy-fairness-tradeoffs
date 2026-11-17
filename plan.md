@@ -15,7 +15,7 @@ Read [proposal.md](proposal.md) for the research questions, exact dataset/featur
 | 1. Data and baseline | Nov 16 | Data audit, fixed splits, working non-private MLP |
 | 2. DP pilots | Nov 17 | Preliminary results at several privacy budgets |
 | 3. Progress report | Nov 18 | Submitted report with completed pilot evidence |
-| 4. Fairness interventions | Nov 19–24 | EO and LFR with non-private controls |
+| 4. Repeated pilots and fairness interventions | Nov 19–24 | Multi-seed baseline/DP averages, plus EO and LFR controls |
 | 5. Main experiments | Nov 25–30 | Frozen protocol and repeated experiment grid |
 | 6. Analysis | Dec 1–3 | Final test results, figures, and findings |
 | 7. Final report | Dec 4–7 | Submission package ready Dec 6; submit by Dec 7 |
@@ -81,7 +81,16 @@ Read [proposal.md](proposal.md) for the research questions, exact dataset/featur
 15. [ ] Write the motivation, connection to Bagdasaryan, exact task and metrics, privacy scope, preliminary findings, and remaining work.
 16. [ ] Label results as single-seed development results; identify incomplete experiments. Review citations and submit.
 
-## November 19–24: fairness interventions
+## November 19–24: repeated runs and fairness interventions
+
+**Nov 19–20: repeat the baseline and DP-SGD pilots**
+
+- [ ] Run at least three training seeds for ordinary SGD and for each DP-SGD budget (epsilon 1, 4, and 8); aim for five if feasible. Keep the data splits and training settings fixed and save each run separately.
+
+**Nov 21–24: average and compare the repeated results**
+
+- [ ] Calculate mean and standard deviation of accuracy, group accuracy losses, and fairness gaps across runs; add error bars to the comparison plots.
+- [ ] Check whether the original single-run findings persist and whether differences between privacy budgets exceed run-to-run variation. See the repetition protocol in “Next priorities” above.
 
 **Nov 19–21: equalized-odds post-processing**
 
@@ -95,7 +104,7 @@ Read [proposal.md](proposal.md) for the research questions, exact dataset/featur
 21. [ ] Train downstream ordinary/private MLPs on transformed features with original labels. Fit matched controls on identical records.
 22. [ ] Check convergence, utility, and runtime; use a small predefined development-only fairness-weight grid.
 
-**Done:** both interventions produce comparable saved outputs, with non-private controls.
+**Done:** each pilot setting has at least three runs and an averaged comparison table/plot; both interventions produce comparable saved outputs, with non-private controls.
 
 ## November 25–30: main experiments
 
