@@ -10,19 +10,20 @@
     "Readable labels and complete error bars, with numeric axis-limit assertions for Figure1.",
     "No clipped labels or overlapping titles, axes, or footer text.",
     "Both booktabs tables compiled at 11pt with one-inch margins, rendered and visually inspected.",
-    "No LaTeX overfull boxes; PDF font embedding confirmed."
+    "No LaTeX overfull boxes; PDF font embedding confirmed.",
+    "SVG whitespace normalized; XML elements, attributes, path coordinates and text verified unchanged."
   ],
   "passed": true,
   "asset_sha256": {
     "figures/figure1_racial_impact.pdf": "6b61d970743527f5d9782ac916381915352d2595e24ee7920988a3f1be6a60ea",
     "figures/figure1_racial_impact.png": "0294243ddd9055b1b2fc54b599437fe51f0ea7047252f5a9bad1d527000c89ec",
-    "figures/figure1_racial_impact.svg": "766e060f42c5f4df2970d19414126b06f4d1d185a307a2128be2b6b7ffbb7c4c",
+    "figures/figure1_racial_impact.svg": "eb4e012cf008c947c074fb1017755afab5ba02ac5323714b4e94ef14f1341656",
     "figures/figure2_accuracy_ablations.pdf": "668deb549e26a767f0f7bdb3a55fa2d3c52dc99b394ff1663ebb861526aae4fa",
     "figures/figure2_accuracy_ablations.png": "aa886ffa395ef49a5ef5fac7c45d18efe353b99c7816453c0f9cbd81fa10e381",
-    "figures/figure2_accuracy_ablations.svg": "3593aafa56b89482c6a54ea6abb8ee4ed5f1c0e7096752a3d9bc3b4a53e12a38",
+    "figures/figure2_accuracy_ablations.svg": "6c2f601bd34d7238304a2523ae2b81edf472b98d897fd382ec637b4803f10228",
     "figures/figure3_fairness_optional.pdf": "465d32863cbbda972a4785d79e5161cb79fda5b20c0f5075c507b04c0596c0ae",
     "figures/figure3_fairness_optional.png": "9bd80651327982387fa33371b54675c3e045953f3f4e5ac2ee0ded229442b1f6",
-    "figures/figure3_fairness_optional.svg": "f1f1e2a1ada9e689b14e5d68b380a529a9f2e822b950a8e3a65f483afbed24e5",
+    "figures/figure3_fairness_optional.svg": "ae7afefa68bb9bc1551b32bca59efebdc572c0f8cccdea2237052faa78367301",
     "tables/table1_sgd_vs_dp1.tex": "ff0ae88270514c04079281fc6634b9bd3cf57f4d931f7cb05098df469e9212a7",
     "tables/table2_privacy_budgets.tex": "c52bf5194cc784cb38d6e3445c503ef432931fa381281510e2ead76da971d2dd"
   }

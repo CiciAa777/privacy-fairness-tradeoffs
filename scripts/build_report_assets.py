@@ -255,7 +255,11 @@ def figures(e):
     blue, orange, gray, green = '#2166AC', '#C65C28', '#586575', '#347B62'
     def save(fig, name):
         for extension in ['pdf', 'png', 'svg']:
-            fig.savefig(OUT/'figures'/f'{name}.{extension}', dpi=350)
+            path = OUT/'figures'/f'{name}.{extension}'
+            fig.savefig(path, dpi=350)
+            if extension == 'svg':
+                # Matplotlib emits trailing spaces inside multiline path attributes.
+                path.write_text('\n'.join(line.rstrip() for line in path.read_text(encoding='utf-8').splitlines())+'\n', encoding='utf-8')
         plt.close(fig)
     points = []
     labels = []

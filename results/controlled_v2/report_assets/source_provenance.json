@@ -31,5 +31,5 @@
     "results/controlled_v2/GROUP_COMPARISONS.md": "d7332e4f4ef2587b5424b131aeb4e8e8c02414e0cc6848d33811785fc039aae3"
   },
   "builder": "scripts/build_report_assets.py",
-  "builder_sha256": "dc79879fb4e47c2266e6f18c682a3730008cab096a31962f622708500b7f7bbf"
+  "builder_sha256": "8c12b4b579eee24aae2a340fba60f0633574f2af60069a71f3aa188cec924718"
 }
