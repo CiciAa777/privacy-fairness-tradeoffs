@@ -1,0 +1,2 @@
+epoch,steps,epsilon,development_bce,development_accuracy
+1,8,,0.6319301724433899,0.8828125

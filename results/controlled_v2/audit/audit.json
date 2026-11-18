@@ -1,0 +1,29 @@
+{
+  "data_identity": {
+    "original_manifest_sha256": "51c635c5131d46e5bd18b4217e69d982cd6e0464fa52f5955da808ce3d24f354",
+    "fixed_assignments_sha256": "a0ae6cdde66bc148eab0608e198d10e981a5d51219ae5e8861e3037bc711d396",
+    "split_row_ids_sha256": {
+      "reference": "ef6852a4130774b445a635305fadcd8d6e8d89699abc32cf98be3638fdac9df4",
+      "train": "789ce02d9248fc5b1a01a4bb1b8d71599e53bd0e481ccd85fa4ca9cadb8138e2",
+      "development": "258ab6a864e7574ff19fdff3b576025fc8d28f73340891b9426d32136f902f8c"
+    }
+  },
+  "data_signature": "b5904e237a276cea4bd56aed73d5288b10f5507ab0659b3339a3b09de0559a88",
+  "splits_changed": false,
+  "test_outcomes_loaded": false,
+  "household_split": false,
+  "public_auxiliary_assumption": true,
+  "target_unchanged": true,
+  "household_overlap_exists": true,
+  "fixes": [
+    "Primary policy adds categorical SEX/RAC1P; original exclusion retained as secondary",
+    "Diagnostic Poisson controls use DP expected-batch normalization",
+    "Five paired initializations replace single-run comparisons",
+    "Existing person splits retained despite household overlap; record-level DP only"
+  ],
+  "limitations": [
+    "Household members may span training and auxiliary/test splits",
+    "These are individual-record, not household-level DP bounds",
+    "Public descriptive audits and non-private controls are not DP releases"
+  ]
+}

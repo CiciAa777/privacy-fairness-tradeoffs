@@ -1,91 +1,49 @@
-# Privacy–Fairness Tradeoffs
+# Privacy-Fairness Tradeoffs
 
-We study whether DP-SGD changes employment-prediction accuracy disproportionately across sex and race groups, and whether LFR or equalized-odds post-processing helps.
+The active experiment is the **controlled v2 baseline/DP-SGD rerun**. The original single-run pilots, reports, figures, notebooks, and settings are preserved in [V0/](V0/SETTINGS.txt).
 
-| Read this | For this purpose |
-| --- | --- |
-| [proposal.md](proposal.md) | Research questions, dataset/features/target, fairness definitions, related work, and privacy assumptions |
-| [plan.md](plan.md) | Dated phases, today's tasks, milestones, and fallback priorities |
-| [data_processing_log.md](data_processing_log.md) | What preparation actually did, observed column values/code meanings, current findings, and choices to review |
-| [02_baseline.ipynb](notebooks/02_baseline.ipynb) | Training settings, loss curves, majority comparison, and development accuracy/fairness results |
-| [03_dp_sgd.ipynb](notebooks/03_dp_sgd.ipynb) | Completed DP-SGD pilots, privacy budgets, learning curves, and group comparisons |
-| [dp_training_log.md](dp_training_log.md) | Exact DP training/accounting settings, preliminary results, and interpretation limits |
-| [Fairness: start here](reports/fairness/README.md) | Desired rate directions, interpreted White/Black comparisons, and links to illustrated definitions and all result tables |
+Read [plan.md](plan.md) for the execution stages and changes, [proposal.md](proposal.md) for research definitions, and [the exact rerun request](V0/CONTROLLED_RERUN_REQUEST.txt) for requirements. The original progress-report source/PDF are in [V0/reports/progress_report/](V0/reports/progress_report/README.md); they remain unchanged.
 
-**Progress report:** November 18, 2026. **Final report:** December 7, 2026.
+## Controlled experiment
 
-## Progress report for Overleaf
+- California 2018 ACS Employment, original age/weight filters and fixed splits; Y=(ESR==1).
+- Primary: include SEX/RAC1P as categorical predictors (87 encoded columns). Secondary: original sensitive-feature exclusion (77 columns).
+- Both policies use the same reference-only preprocessing rules, labels, cohort, and original training/development assignments. Test outcomes remain reserved.
+- MLP input->64->32->1; ReLU; SGD lr0.05, momentum0; 20 epochs; batch512; threshold0.5.
+- Five initialization seeds: 42,123,285,2026,2027. SGD + DP epsilon1/4/8 = 40 main runs.
+- Poisson unclipped and clipped C=1 noise-free controls = 20 extra non-private runs.
+- No LFR/EO or final publication figures in this rerun.
 
-The LaTeX report by Xiyin Xu and Shannon Saad is ready as a standalone [Overleaf ZIP](reports/progress_report/progress_report_overleaf.zip), with a compiled [PDF preview](reports/progress_report/progress_report.pdf). In Overleaf, choose **New Project → Upload Project**, upload the ZIP, and compile `main.tex` using **pdfLaTeX**.
-
-All report material is under `reports/`: [progress_report/](reports/progress_report/README.md) contains the current LaTeX source, PDF, Overleaf ZIP, and an `archive/` for the older extended draft; [fairness/](reports/fairness/README.md) combines the explanations, interpreted comparisons, complete tables, teaching images, and printable guide. Temporary build files go under ignored `tmp/`. There is no separate `output/` folder.
-
-Rebuild the report PDF and ZIP with `python scripts/build_progress_report.py` when TeX Live/MiKTeX is installed. The original partner Markdown draft and experiment plots are preserved.
-
-Recommended workflow:
-
-1. Agree on definitions in the proposal and check them against a data-audit notebook.
-2. Implement reusable data preparation, training, and evaluation in Python modules; call them from notebooks and scripts.
-3. Save configurations, split indices, and result tables so comparisons can be reproduced.
-4. Update task checkboxes in the plan; record research-design changes in the proposal before running affected experiments.
-5. Write the progress/final reports from saved results and figures.
-
-## Set up and get the data
-
-A collaborator can clone this repository and run the preparation script to download and process the data locally. No manual CSV transfer is needed. Raw/processed data, environments, checkpoints, and row-level predictions are intentionally excluded from Git; aggregate results and executed notebooks are included.
-
-Use Python 3.14 (tested here) and a new virtual environment. Run these commands in a Windows PowerShell terminal:
+## Environment and data
 
 ```powershell
-git clone https://github.com/CiciAa777/privacy-fairness-tradeoffs.git
-cd privacy-fairness-tradeoffs
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe scripts\prepare_data.py
 ```
 
-On macOS/Linux, use `.venv/bin/python` instead of `.\.venv\Scripts\python.exe` in the commands after environment creation. Activation is optional because these commands invoke the environment's interpreter directly.
+On a fresh clone, download/prepare the original fixed cohort with `.\.venv\Scripts\python.exe scripts\prepare_data.py`. This preparation step creates the original person-level split assignments using seed285; do not rerun it over an existing study's prepared data. The controlled preparation reuses those assignments and does not modify them. Raw data and processed matrices stay local under ignored `data/`.
 
-The first preparation run requires an internet connection to the Census Bureau. It downloads California's 2018 ACS 1-Year person data (the extracted raw CSV is about 267 MB). Later runs reuse the local cache. It applies the documented filters, drops ESP, creates the fixed splits, fits preprocessing on reference records, and writes the encoded matrices and descriptive audit tables. It does not train a model.
-
-All dependencies are listed in the single [requirements.txt](requirements.txt). Exact library versions used for an experiment are recorded in its data manifest and model summary. The current machine originally reused system scientific packages; collaborators should use the isolated environment above.
-
-## Inspect the prepared data
-
-Open [01_data_audit.ipynb](notebooks/01_data_audit.ipynb). In the notebook kernel picker, choose the interpreter at `.venv\Scripts\python.exe`, then run cells from the top. The Markdown explanations and questions guide the review. The notebook's final Markdown cell is for your observations.
-
-Preparation downloads Census data once and caches it under the ignored `data/raw/` directory:
+## Execute in order
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\prepare_data.py
-```
-
-Processed sparse matrices, aligned labels/protected metadata, split assignments, and the preparation manifest are under `data/processed/`. Descriptive audit tables are under `results/data_audit/`. Model inputs exclude sex, race, the target, and survey weights. Learned preprocessing uses the reference subset only.
-
-To reproduce the baseline on newly prepared local data, run the non-private training command below. The data manifest includes library versions, so regenerate the baseline locally before comparing it with new private runs. Saved notebook outputs can be read immediately; rerunning their code requires the local data/results they reference.
-
-## Non-private baseline
-
-ESP was dropped by user decision; the 14 remaining input variables become 77 encoded columns. The initial model is an MLP with hidden widths 64 and 32, trained for 20 epochs with ordinary SGD and binary cross-entropy. It predicts the existing ESR==1 target. This initial run uses development data for reporting; it never loads the test set.
-
-```powershell
-.\.venv\Scripts\python.exe scripts\train_baseline.py
+.\.venv\Scripts\python.exe scripts\run_controlled.py --stage prepare
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe scripts\run_controlled.py --stage smoke
+.\.venv\Scripts\python.exe scripts\run_controlled.py --stage main
+.\.venv\Scripts\python.exe scripts\run_controlled.py --stage controls
+.\.venv\Scripts\python.exe scripts\run_controlled.py --stage summarize
 ```
 
-Settings are in [configs/baseline.json](configs/baseline.json). Reusable training and metric functions are in `src/baseline.py` and `src/metrics.py`; the script is the entry point. Outputs under `results/baseline/` include loss history, development predictions, group metrics, summary/configuration, and the ignored model checkpoint. Re-running the same output directory overwrites its artifacts. The summary records PyTorch's version and a fingerprint of the data manifest.
+Smoke runs use disjoint subsets of the **public reference** partition, not private training or final test records. They check the pipeline without adding private-training releases. Settings are in [configs/controlled_v2.json](configs/controlled_v2.json).
 
-Inspect notebook 02 as the non-private reference for the completed DP-SGD pilots below. Several seeds/privacy budgets are needed before drawing privacy–fairness conclusions. LFR and EO follow after the DP pilots.
+Completed matching runs are skipped automatically. To resume interrupted main/control execution, rerun the same command. Partial runs restart from their initial seed; completed runs are never overwritten. A changed protocol/source fingerprint causes an error instead of silently mixing experiments. An interrupted process may leave a `.running` marker: verify its PID is no longer running before removing that marker and restarting. `--policies include_sensitive` and `--seeds 42` select subsets for execution; they do not change the configured study grid.
 
-## DP-SGD pilots
+## Outputs and privacy scope
 
-The three 20-epoch development pilots at epsilon 1, 4, and 8 are completed using Opacus 1.6.0, RDP accounting, Poisson sampling, clipping norm 1, and delta=1/(10*n_train). See notebook 03 and the DP training log for results. The same model factory and metrics are shared with the ordinary baseline. Sampling/noise RNG seeds are not exported; a repeated run produces a new randomized experiment.
+New outputs are under `results/controlled_v2/`: `audit/`, `runs/<policy>/<method>/seed_<seed>/`, `smoke/`, and later `aggregate/`. Cached matrices/metadata, checkpoints, and row-level development predictions remain ignored by Git. Published identity hashes describe fixed partition IDs/public manifest, not private training labels or feature values.
 
-```powershell
-.\.venv\Scripts\python.exe scripts\train_dp.py
-.\.venv\Scripts\python.exe scripts\report_dp.py
-```
+DP-SGD uses Poisson sampling, clipping C=1, RDP accounting, and delta=1/(10*n_train). Baseline and diagnostic controls are **not private**. Per-run individual-record privacy bounds assume fixed public reference/development/calibration data; releasing multiple private outputs requires composition. The whole repository, public descriptive audits, and non-private controls are not an end-to-end DP release. Research RNG mode is retained; sampling/noise RNG state is never exported.
 
-The completed pilot summaries are already included in Git, so the training command above refuses to overwrite them, including on a fresh clone. For a new replicate, copy `configs/dp_pilot.json`, change its `output_dir` to an unused directory, then run `scripts/train_dp.py --config path/to/copied_config.json` after regenerating the local baseline. Account for additional releases. The report command currently reads the original `results/dp_pilot/` runs and rebuilds their notebook/log/PNG figures without retraining; it does not automatically report a new output directory. Individual predictions and checkpoints stay ignored by Git. Budgets apply per private run under the documented public-auxiliary assumption; the ordinary baseline and repository as a whole are not DP releases.
+Household overlap is audited, but the original person-level splits are retained. These are record-level, not household-level privacy claims. Repeated-seed variability measures training variation, not population-sampling uncertainty.
 
-Next: inspect the pilot findings for the progress report, then repeat seeds and implement LFR/EO. Full-race gaps can be undefined for rare groups; retain the counts and prespecify supported comparisons rather than silently omitting categories.
+Legacy entry points and their exact source are preserved in `V0/scripts/` and `V0/src/` for historical inspection. Use the controlled runner for new experiments rather than regenerating the old report/pilots.

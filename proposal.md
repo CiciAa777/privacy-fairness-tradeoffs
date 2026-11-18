@@ -1,6 +1,6 @@
 # Privacy–Fairness Tradeoffs: Research Proposal
 
-**Working design, updated November 16, 2026.** This document explains the experiment and its definitions. [plan.md](plan.md) contains the schedule and task checklist. The defaults below will be checked in the first data audit and frozen before the main experiments.
+**Working design, updated November 17, 2026.** The controlled rerun now takes priority; [plan.md](plan.md) records the changes and execution stages. The original design, single-run results, and report are preserved under `V0/`.
 
 ## 1. The project in plain language
 
@@ -73,7 +73,7 @@ The filtered task has these 17 source features. Meanings follow the [Folktables 
 | `AGEP` | Age | Model input |
 | `SCHL` | Educational attainment | Model input |
 | `MAR` | Marital status | Model input |
-| `SEX` | Recorded sex | Protected metadata |
+| `SEX` | Recorded sex | One-hot predictor in primary policy; protected metadata in both policies |
 | `DIS` | Disability status | Model input |
 | `ESP` | Parents' employment status | Dropped by user decision (Nov 16): 98.58% missing |
 | `MIG` | Mobility status | Model input |
@@ -85,12 +85,12 @@ The filtered task has these 17 source features. Meanings follow the [Folktables 
 | `DEAR` | Hearing difficulty | Model input |
 | `DEYE` | Vision difficulty | Model input |
 | `DREM` | Cognitive difficulty | Model input |
-| `RAC1P` | Race category | Protected metadata |
+| `RAC1P` | Race category | One-hot predictor in primary policy; protected metadata in both policies |
 | `GCL` | Grandparents living with grandchildren | Model input |
 
-This gives **14 input columns before encoding**, plus two protected-attribute columns; ESP is omitted from the prepared cohort and inputs but retained in missingness audits. `ESR`, identifiers, and survey weights are excluded from model inputs. `ANC` describes the ancestry response pattern rather than a detailed ancestry identity.
+The primary `include_sensitive` policy has **16 input columns before encoding**, including SEX and RAC1P; the secondary `exclude_sensitive` policy retains the original **14 inputs**. Both preserve sensitive labels separately for evaluation. ESP remains excluded. `ESR`, identifiers, survey weights, and Y are never predictor inputs. `ANC` describes the ancestry response pattern rather than a detailed ancestry identity.
 
-Sex and race are both protected attributes in our evaluation. Keep all recorded race categories for the main audit. Exclude direct `SEX`/`RAC1P` inputs from the primary MLP, while retaining them for fairness methods and evaluation; correlated features can still reveal group information. Use unweighted benchmark metrics initially and distinguish them from survey-weighted population estimates.
+Sex and race are both protected attributes in our evaluation and are included as categorical predictors in the primary controlled comparison. Keep all nine race categories in detailed audits; separately label headline race gaps for groups with at least 500 development observations. Use unweighted benchmark metrics and distinguish them from survey-weighted population estimates. Reference-only encoding yields 87 primary and 77 secondary columns: race code4 is absent from the reference subset and is handled by the existing unknown-category rule, without dropping those records or their audit labels.
 
 ## 4. Fairness definitions and metrics
 
@@ -149,7 +149,7 @@ Improving a sex-level metric does not establish fairness within every race-by-se
 
 Compare six families: SGD, DP-SGD, LFR+SGD, LFR+DP-SGD, SGD+EO, and DP-SGD+EO. The non-private intervention controls reveal each intervention's own utility cost.
 
-Starting settings: MLP hidden widths `[64, 32]` with ReLU and no BatchNorm; SGD; fixed training duration selected on development data. Pilots use epsilon `{1, 4, 8}` and one seed. Main runs use `{0.5, 1, 2, 4, 8}` and at least three training seeds, with one fixed data split and matched development-only tuning allowances. EO reuses existing checkpoints.
+Controlled settings: MLP hidden widths `[64, 32]`, ReLU, SGD lr0.05/momentum0, 20 epochs, nominal batch512, fixed threshold0.5 and final epoch. Run SGD plus DP epsilon `{1,4,8}` with seeds `[42,123,285,2026,2027]` under both feature policies (40 main runs). Add Poisson-unclipped and Poisson-clipped C=1 noise-free non-private controls for both policies/seeds (20 runs), using DP's expected-batch gradient normalization. Extend important settings to ten seeds after reviewing variability. Interventions and publication figures wait until the controlled baselines are reviewed; EO will reuse suitable checkpoints later.
 
 ## 6. Data preparation and privacy scope
 
