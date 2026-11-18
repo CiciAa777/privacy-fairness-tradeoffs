@@ -1,0 +1,30 @@
+{
+  "overall_and_gap_statistics": 504,
+  "group_statistics": 4524,
+  "paired_vs_sgd_statistics": 430,
+  "group_rate_changes_statistics": 2030,
+  "group_accuracy_losses_statistics": 290,
+  "budget_differences_statistics": 252,
+  "group_confusion_rows_and_seed_gap_sets": [
+    1740,
+    240
+  ],
+  "paired_group_rows": 1450,
+  "paired_budget_rows": 30,
+  "complete_runs": 60,
+  "frozen_source_files_checked": 439,
+  "all_frozen_sources_unchanged": true,
+  "training_executed": false,
+  "test_evaluated": false,
+  "score_diagnostics_executed": false,
+  "clipping_sensitivity_executed": false,
+  "main_figures": 2,
+  "optional_figures": 1,
+  "formats": [
+    "pdf",
+    "png",
+    "svg"
+  ],
+  "summary_tables": 2,
+  "visual_review": "Passed; see visual_review.json for inspected asset hashes and LaTeX checks."
+}

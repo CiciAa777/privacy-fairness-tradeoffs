@@ -1,0 +1,3 @@
+comparison,mean_pp,sd_pp
+dp_epsilon_4 minus dp_epsilon_1,0.03238170763943948,0.0592651246491467
+dp_epsilon_8 minus dp_epsilon_1,-0.06608511763150915,0.04225056784478052

@@ -1,0 +1,4 @@
+comparison,mean_pp,sd_pp
+poisson_unclipped minus sgd,0.14538725878932013,0.41550278680806396
+poisson_clipped minus poisson_unclipped,-2.0552471583399456,0.47685003302603474
+dp_epsilon_1 minus poisson_clipped,0.0046259582342056405,0.05095415417975461

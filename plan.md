@@ -68,6 +68,15 @@ Initialization seeds: **[42, 123, 285, 2026, 2027]**.
 
 ## Review gate and remaining schedule
 
+**November 18 report-assets update:** At the team's request, analyzed the existing five-seed runs and produced [REPORT_FINDINGS.md](results/controlled_v2/REPORT_FINDINGS.md), two main multi-panel figures, one optional fairness figure, captions, and two compact tables in [report_assets/](results/controlled_v2/report_assets/README.md). Figure exports are PDF/PNG/SVG and tables include Overleaf-ready LaTeX. All source results/aggregates were preserved and independently checked. No models were retrained, tests evaluated, or additional experiments run. The archived progress report remains unchanged.
+
+Focused experiments proposed for review, **not executed**:
+
+- [ ] Prespecify C in {0.5,1,2,5} at fixed epsilon1, retaining cohort/splits/architecture/optimizer/training budget, initialization seeds, and evaluation. Verify calibrated sigma and Gaussian SD=sigma*C, privacy accounting, and composition. Compare accuracy, group losses, selection rates, TPR/FPR, and all four gaps.
+- [ ] Diagnose saved development scores by label/group using score distributions, ROC/AUC, and threshold operating points. Compare SGD, clipped-noise-free and DP without using final test outcomes.
+- [ ] If feasible, measure clipping frequency by label/group on permitted public-reference data or via separately budgeted DP training summaries; keep raw private gradient norms/counts private.
+- [ ] After reviewing these results, expand selected settings to ten seeds, add ACSIncome, and proceed to EO/LFR. Freeze choices before final test evaluation.
+
 **November 17 findings clarification:** Reorganized `results/controlled_v2/FINDINGS.md` around DP-versus-SGD group impacts before feature-policy comparisons. Added accuracy levels and paired losses for sex/all nine race groups at epsilon1/4/8, all four fairness gaps with direction and seed consistency, and concrete group TPR/FPR comparisons. `GROUP_COMPARISONS.md` provides all race-by-sex intersections and per-budget rate levels/paired changes with denominator support. This is an analysis/presentation update using the existing 60 runs; no training, target, split, test-set, or report changes.
 
 Review the controlled results first. Expand important configurations to ten seeds for final analysis if the five-seed variability makes budget effects inconclusive; record the additional seeds before running them.

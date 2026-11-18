@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llll}
+\toprule
+Measure & $\epsilon=1$ & $\epsilon=4$ & $\epsilon=8$ \\
+\midrule
+Accuracy (\%) & 75.517 $\pm$ 0.343 & 75.550 $\pm$ 0.334 & 75.451 $\pm$ 0.351 \\
+Paired accuracy loss (pp) & 1.905 $\pm$ 0.713 & 1.873 $\pm$ 0.727 & 1.971 $\pm$ 0.701 \\
+Sex separation (pp) & 5.032 $\pm$ 0.712 & 5.044 $\pm$ 0.642 & 5.015 $\pm$ 0.581 \\
+Race separation (pp) & 31.242 $\pm$ 1.445 & 30.792 $\pm$ 1.163 & 30.962 $\pm$ 1.440 \\
+\bottomrule
+\end{tabular}
+\caption{Primary setting, fixed clipping norm $C=1$. Means $\pm$ sample SD over five seeds. Paired losses use each initialization-matched SGD baseline. Race separation uses development $n\geq500$ groups.}
+\label{tab:budgets}
+\end{table}
