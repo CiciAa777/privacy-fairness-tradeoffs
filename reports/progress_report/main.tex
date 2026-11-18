@@ -32,14 +32,14 @@ ECE 285 Progress Report \quad | \quad November 18, 2026
 \vspace{-3pt}
 
 \section{Proposal feedback, updates, and changes}
-Our proposal received positive feedback, with encouragement to include additional Folktables datasets. We have completed experiments only on ACSEmployment so far. After the core fairness interventions, we plan a small ACSIncome check if time permits, rather than claiming generalization from one task. The original questions remain: does DP-SGD disproportionately reduce group accuracy, can pre-/post-processing mitigate disparities, and how do tradeoffs vary with privacy budget? This extends Bagdasaryan et al.~\cite{bagdasaryan2019} to tabular data and additional fairness criteria.
+Our proposal received positive feedback, with encouragement to include additional Folktables datasets. Only ACSEmployment experiments are complete; repeated ACSIncome comparisons are planned next. The original questions remain: does DP-SGD disproportionately reduce group accuracy, can pre-/post-processing mitigate disparities, and how do tradeoffs vary with privacy budget? This extends Bagdasaryan et al.~\cite{bagdasaryan2019} to tabular data and additional fairness criteria.
 
 Implementation refinements are a fixed California/year cohort, removal of the mostly inapplicable ESP feature, and separate reference/development/calibration partitions in addition to training/test data. The objectives and planned Learning Fair Representations (LFR) and equalized-odds (EO) interventions are unchanged.
 
 \section{Experiments completed}
 We built a reproducible pipeline for California 2018 ACS 1-Year person data via Folktables~\cite{ding2021}. Filtering to ages 17--89 and positive person weights retains 302,640 of 378,817 records. The target is exactly $Y=1$ for ESR=1 (civilian employed, at work); negatives include temporary absence and military employment. We dropped ESP, missing in 98.58\% of eligible records, without removing people. Fourteen inputs become 77 columns using standardized age and one-hot encoding; sex/race are audit metadata, not direct inputs.
 
-Fixed person-level splits (seed 285) allocate 10\% reference, 50\% training, 10\% development, 10\% calibration, and 20\% test. Preprocessing is fitted only on reference data. We trained an ordinary SGD MLP ($77\!\rightarrow\!64\!\rightarrow\!32\!\rightarrow\!1$, ReLU) and three DP-SGD pilots. All use binary cross-entropy, learning rate 0.05, nominal batch size 512, 20 epochs, and threshold 0.5. DP uses Opacus, Poisson sampling, clipping norm 1, 5,920 updates, and R\'enyi-DP accounting with $\delta=6.61\times10^{-7}$.
+Fixed person-level splits (seed 285) allocate 10\% reference, 50\% training, 10\% development, 10\% calibration, and 20\% test. Preprocessing is fitted only on reference data. We trained an ordinary SGD MLP ($77\!\rightarrow\!64\!\rightarrow\!32\!\rightarrow\!1$, ReLU) and three DP-SGD pilots. All use binary cross-entropy, learning rate 0.05, nominal batch size 512, 20 epochs, and threshold 0.5. DP uses Opacus, Poisson sampling, clipping norm 1, 5,920 updates, and R\'enyi-DP accounting with $\delta=6.61\times10^{-7}$. Smaller $\eps$ means stronger privacy at this fixed $\delta$.
 
 \begin{table}[H]
 \centering
@@ -56,21 +56,21 @@ The baseline exceeds majority prediction (57.01\% accuracy). Each privacy budget
 
 \newpage
 \section{Important observations and current limitations}
-DP training costs about 1.3 percentage points of accuracy (Table~\ref{tab:results}). Females lose 1.6--1.7 points versus 0.9 for males; larger race groups lose 0.7--1.8 (Figure~\ref{fig:groups}). These suggest unequal costs, but the private runs differ by only 0.04 points overall: repetitions are needed before inferring budget effects.
+DP training costs about 1.3 accuracy points (Table~\ref{tab:results}). Females lose 1.6--1.7 points versus 0.9 for males (Figure~\ref{fig:groups}). These suggest unequal costs, but the private runs differ by only 0.04 points overall; budget effects require repeated runs.
 
 \begin{figure}[H]
 \centering\includegraphics[width=\linewidth]{group_loss_vs_epsilon.png}
-\caption{Group accuracy loss versus SGD. Race groups with fewer than 500 development records are omitted from this display, but retained in the full audit.}\label{fig:groups}
+\caption{Group accuracy loss versus SGD. Original Census race categories are retained; groups with fewer than 500 development records are omitted only from this display.}\label{fig:groups}
 \end{figure}
 
-We measure accuracy parity, independence (selection-rate gap), separation (maximum TPR/FPR gap), and binary sufficiency (maximum PPV/NPV gap). Gaps are maximum minus minimum across groups. At $\eps\approx1$, the sex accuracy gap rises from 6.67 to 7.38 points, but separation falls from 12.01 to 11.38 and sufficiency from 12.58 to 12.12: the criteria move in opposite directions.
+We measure accuracy parity (equal correctness), independence (equal positive-prediction rates), separation (equal TPR/FPR within actual classes), and binary sufficiency (equal PPV/NPV within predicted classes). Each rate gap is maximum minus minimum across groups; separation/sufficiency take the larger component gap. At $\eps\approx1$, the sex accuracy gap rises from 6.67 to 7.38 points, but separation falls from 12.01 to 11.38 and sufficiency from 12.58 to 12.12: the criteria move in opposite directions.
 
-Full-race separation/sufficiency are undefined because a rare group lacks positive labels; this is not zero disparity. A separately labeled White-alone/Black-alone comparison is planned. Limitations include one run per budget, small groups, unweighted metrics, and one task/state/year. Ordinary and private training differ in sampling, clipping, and noise; diagnostic runs are needed to separate effects. Disparities do not establish causal discrimination.
+Full-race separation/sufficiency are undefined because a rare group lacks positive labels, not because disparity is zero. Limitations include single runs, small groups, unweighted metrics, and one task/state/year. Sampling, clipping, and noise differ between ordinary/private training; diagnostics are needed to separate effects. Disparities do not establish causal discrimination.
 
 \section{Remaining steps and timeline}
-\textbf{Nov.\ 19--21:} equalized-odds post-processing~\cite{hardt2016}, with ordinary/private controls. \textbf{Nov.\ 22--24:} reference-fitted LFR~\cite{zemel2013} and matched downstream MLPs; audit sex/race after both interventions.
+\textbf{Nov.\ 19--24:} repeat SGD and DP pilots ($\eps=1,4,8$), at least three training seeds per setting, with fixed splits/settings. Report mean accuracy/fairness, standard deviations, and error bars. Fit EO~\cite{hardt2016} (Nov.\ 19--21) and LFR~\cite{zemel2013} (Nov.\ 22--24), with ordinary/private controls.
 
-\textbf{Nov.\ 25--30:} freeze settings; run at least three seeds at $\eps\in\{0.5,1,2,4,8\}$ (fallback $\{1,4,8\}$), diagnostic runs, and ACSIncome if feasible. \textbf{Dec.\ 1--3:} final test evaluation and uncertainty estimates. \textbf{Dec.\ 4--7:} final report; submit by December 7.
+\textbf{Nov.\ 25--30:} freeze settings; repeat interventions at $\eps\in\{0.5,1,2,4,8\}$ (fallback $\{1,4,8\}$), at least three seeds each; add repeated ACSIncome baseline/DP comparisons. \textbf{Dec.\ 1--3:} final test evaluation and uncertainty estimates. \textbf{Dec.\ 4--7:} write and submit the final report.
 
 \renewcommand{\refname}{References}
 \begin{thebibliography}{4}

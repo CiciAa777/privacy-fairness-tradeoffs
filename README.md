@@ -10,6 +10,7 @@ We study whether DP-SGD changes employment-prediction accuracy disproportionatel
 | [02_baseline.ipynb](notebooks/02_baseline.ipynb) | Training settings, loss curves, majority comparison, and development accuracy/fairness results |
 | [03_dp_sgd.ipynb](notebooks/03_dp_sgd.ipynb) | Completed DP-SGD pilots, privacy budgets, learning curves, and group comparisons |
 | [dp_training_log.md](dp_training_log.md) | Exact DP training/accounting settings, preliminary results, and interpretation limits |
+| [fairness_metric_guide.md](fairness_metric_guide.md) | Four illustrated metric explanations, privacy-budget direction, and original Census race categories |
 
 **Progress report:** November 18, 2026. **Final report:** December 7, 2026.
 

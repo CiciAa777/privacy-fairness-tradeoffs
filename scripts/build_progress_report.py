@@ -45,8 +45,11 @@ outpdf=ROOT/'output/pdf';outpdf.mkdir(parents=True,exist_ok=True)
 shutil.copy2(BUILD/'main.pdf',outpdf/'progress_report.pdf')
 outzip=ROOT/'output/overleaf';outzip.mkdir(parents=True,exist_ok=True)
 with zipfile.ZipFile(outzip/'progress_report_overleaf.zip','w',zipfile.ZIP_DEFLATED) as archive:
-    for name in ['main.tex','references.bib','README.md']:
+    for name in ['main.tex','references.bib','README.md','OVERLEAF_SYNC.md']:
         archive.write(SOURCE/name,name)
     for name in FIGURES:
         archive.write(SOURCE/'figures'/name,'figures/'+name)
+    archive.write(ROOT/'fairness_metric_guide.md','fairness_metric_guide.md')
+    for path in sorted((ROOT/'figures/fairness_guide').glob('*.png')):
+        archive.write(path,'figures/fairness_guide/'+path.name)
 print('Built output/pdf/progress_report.pdf and output/overleaf/progress_report_overleaf.zip')
