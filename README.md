@@ -4,7 +4,7 @@ The active experiment is the **controlled v2 baseline/DP-SGD rerun**. The origin
 
 **Completed:** 40 main runs plus 20 non-private controls, five seeds per setting. Start with [the report findings](results/controlled_v2/REPORT_FINDINGS.md) and [publication figures, captions, and tables](results/controlled_v2/report_assets/README.md). The [detailed findings](results/controlled_v2/FINDINGS.md), [group comparisons](results/controlled_v2/GROUP_COMPARISONS.md), and [aggregate conventions](results/controlled_v2/aggregate/README.md) retain the full analysis. Interventions and new sensitivity experiments remain planned.
 
-Read [plan.md](plan.md) for the execution stages and changes, [proposal.md](proposal.md) for research definitions, and [the exact rerun request](V0/CONTROLLED_RERUN_REQUEST.txt) for requirements. The original progress-report source/PDF are in [V0/reports/progress_report/](V0/reports/progress_report/README.md); they remain unchanged.
+Read [plan.md](plan.md) for the execution stages and changes, [proposal.md](proposal.md) for research definitions, and [the exact rerun request](V0/CONTROLLED_RERUN_REQUEST.txt) for requirements. The current [two-page progress report](reports/progress_report/ECE285_progress_report.pdf), [LaTeX source](reports/progress_report/ECE285_progress_report.tex), and [Overleaf ZIP](reports/progress_report/ECE285_progress_report_overleaf.zip) use the verified five-seed results. See the [report README](reports/progress_report/README.md) for compilation. The original report remains unchanged in `V0/reports/progress_report/`.
 
 ## Controlled experiment
 

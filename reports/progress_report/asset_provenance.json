@@ -1,0 +1,10 @@
+{
+  "source_sha256": {
+    "results/controlled_v2/report_assets/tables/figure1_group_changes.csv": "7ca9c7612ab63ef9cea4272599eb877e0d6b66f4780414a9212da242b187b79b",
+    "results/controlled_v2/report_assets/tables/table1_sgd_vs_dp1.csv": "f544b20bf9d54392ec15d17812ce425be12e3df54f45d8a791d060a7aa62f076",
+    "results/controlled_v2/aggregate/group_rate_changes_mean_std.csv": "650d7eb4a7b502c42949987c406b5d7d4c2cc8224d843ee6c35ca35b54e582ca",
+    "results/controlled_v2/aggregate/metrics_mean_std.csv": "0846f973e9b291750c556b08f74973376636b384194a2965b2f443835f0a4d4f"
+  },
+  "no_training_or_new_evaluation": true,
+  "sources_unchanged": true
+}

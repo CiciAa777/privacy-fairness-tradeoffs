@@ -68,6 +68,8 @@ Initialization seeds: **[42, 123, 285, 2026, 2027]**.
 
 ## Review gate and remaining schedule
 
+**November 18 progress-report update:** Created [ECE285_progress_report.pdf](reports/progress_report/ECE285_progress_report.pdf), its LaTeX source and portable Overleaf ZIP. The report is exactly two US Letter pages with 11pt text, one-inch margins and single spacing. It includes Cici Xu and Shannon Saad, the instructor's encouragement to evaluate additional Folktables tasks, a short setup list, completed five-seed experiments, one compact racial-impact figure, one fairness table, limitations and the timeline through December 7. ACSIncome, ten-seed follow-ups, clipping sensitivity and LFR/EO are explicitly planned. Source values and the independent Overleaf compilation were verified, and both pages were visually inspected. No training or new evaluation occurred; V0 remains unchanged.
+
 **November 18 report-assets update:** At the team's request, analyzed the existing five-seed runs and produced [REPORT_FINDINGS.md](results/controlled_v2/REPORT_FINDINGS.md), two main multi-panel figures, one optional fairness figure, captions, and two compact tables in [report_assets/](results/controlled_v2/report_assets/README.md). Figure exports are PDF/PNG/SVG and tables include Overleaf-ready LaTeX. All source results/aggregates were preserved and independently checked. No models were retrained, tests evaluated, or additional experiments run. The archived progress report remains unchanged.
 
 Focused experiments proposed for review, **not executed**:
@@ -83,6 +85,6 @@ Review the controlled results first. Expand important configurations to ten seed
 
 Review priorities from the completed rerun: (1) the clipping-only controls reproduce most accuracy loss; (2) the sex group with larger accuracy loss changes with feature inclusion/exclusion; (3) race and sex separation can move in opposite directions; (4) epsilon8 is slightly less accurate than epsilon1 in all five inclusion-policy pairs, so retain that observation and investigate before final generalization; (5) ESR2/3/6 diagnostics and the small military cells require careful target interpretation. Keep the target/splits unchanged until a separate comparison is agreed.
 
-After review, schedule EO/LFR and ACSIncome work against the remaining time. They remain project objectives, but are not part of this baseline rerun. Preserve December 1-3 for final test evaluation only after choices are frozen, and December 4-7 for the final report. The existing progress report remains unchanged.
+The current progress report schedules robustness/selected ten-seed follow-ups, ACSIncome and feasible clipping sensitivity for November 19-24; LFR/EO for November 24-30; final configuration selection, held-out testing and figures for December 1-4; and final writing/reproducibility for December 5-7. Freeze choices before using final test outcomes. The original V0 report remains archived unchanged.
 
 If execution is blocked, finish available implementation/checks and record the precise failed stage, completed runs, and command to resume. Never mark an unexecuted run complete.
