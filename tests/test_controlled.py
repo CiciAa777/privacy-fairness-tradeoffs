@@ -11,6 +11,8 @@ from torch.utils.data import DataLoader, TensorDataset
 from opacus import PrivacyEngine
 from opacus.accountants import RDPAccountant
 from opacus.accountants.utils import get_noise_multiplier
+from opacus.data_loader import DPDataLoader
+from opacus.data_loader import DPDataLoader
 
 from src.baseline import make_model
 from src.controlled_data import POLICIES, feature_frame
@@ -20,6 +22,60 @@ from src.controlled_analysis import aggregate, paired_difference
 
 
 class ControlledTests(unittest.TestCase):
+    def test_poisson_controls_use_the_same_sampling_stream(self):
+        dataset = TensorDataset(torch.arange(128).reshape(64, 2).float(), torch.zeros(64))
+        generator_a = torch.Generator().manual_seed(777)
+        generator_b = torch.Generator().manual_seed(777)
+        plain = DPDataLoader.from_data_loader(DataLoader(dataset, batch_size=8, generator=generator_a),
+                                               generator=generator_a)
+        model = make_model(2, [4, 2])
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            _, _, clipped = PrivacyEngine(accountant='rdp').make_private(module=model,
+                optimizer=torch.optim.SGD(model.parameters(), lr=.05),
+                data_loader=DataLoader(dataset, batch_size=8, generator=generator_b),
+                noise_multiplier=0., max_grad_norm=1., poisson_sampling=True)
+        for (a, _), (b, _) in zip(plain, clipped):
+            torch.testing.assert_close(a, b, rtol=0, atol=0)
+
+    def test_fairness_gaps_are_averaged_before_group_rates(self):
+        rows = []
+        for seed, accuracies in [(1, [.9, .8]), (2, [.8, .9])]:
+            frame = pd.DataFrame({name: accuracies for name in
+                                  ['accuracy', 'selection_rate', 'tpr', 'fpr', 'ppv', 'npv']})
+            rows.append(dict(feature_policy='include', method='sgd', model_seed=seed,
+                             gap=gaps_from_frame(frame)['accuracy_gap']))
+        result = aggregate(pd.DataFrame(rows), ['feature_policy', 'method'], ['gap']).iloc[0]
+        self.assertAlmostEqual(result['mean'], .1)
+        self.assertAlmostEqual(np.mean([.9, .8])-np.mean([.8, .9]), 0.)
+
+    def test_poisson_controls_use_the_same_sampling_stream(self):
+        dataset = TensorDataset(torch.arange(128).reshape(64, 2).float(), torch.zeros(64))
+        generator_a = torch.Generator().manual_seed(777)
+        generator_b = torch.Generator().manual_seed(777)
+        plain = DPDataLoader.from_data_loader(DataLoader(dataset, batch_size=8, generator=generator_a),
+                                               generator=generator_a)
+        model = make_model(2, [4, 2])
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            _, _, clipped = PrivacyEngine(accountant='rdp').make_private(module=model,
+                optimizer=torch.optim.SGD(model.parameters(), lr=.05),
+                data_loader=DataLoader(dataset, batch_size=8, generator=generator_b),
+                noise_multiplier=0., max_grad_norm=1., poisson_sampling=True)
+        for (a, _), (b, _) in zip(plain, clipped):
+            torch.testing.assert_close(a, b, rtol=0, atol=0)
+
+    def test_fairness_gaps_are_averaged_before_group_rates(self):
+        rows = []
+        for seed, accuracies in [(1, [.9, .8]), (2, [.8, .9])]:
+            frame = pd.DataFrame({name: accuracies for name in
+                                  ['accuracy', 'selection_rate', 'tpr', 'fpr', 'ppv', 'npv']})
+            rows.append(dict(feature_policy='include', method='sgd', model_seed=seed,
+                             gap=gaps_from_frame(frame)['accuracy_gap']))
+        result = aggregate(pd.DataFrame(rows), ['feature_policy', 'method'], ['gap']).iloc[0]
+        self.assertAlmostEqual(result['mean'], .1)
+        self.assertAlmostEqual(np.mean([.9, .8])-np.mean([.8, .9]), 0.)
+
     def test_paired_seed_aggregation_and_sample_sd(self):
         frame = pd.DataFrame([
             dict(feature_policy='include', method='sgd', model_seed=1, accuracy=.9),

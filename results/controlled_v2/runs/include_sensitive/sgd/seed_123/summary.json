@@ -1,0 +1,131 @@
+{
+  "completed": true,
+  "feature_policy": "include_sensitive",
+  "method": "sgd",
+  "model_seed": 123,
+  "is_smoke": false,
+  "training_population": "fixed original training partition",
+  "run_signature": "4d06f0c13bad999365175894206615c2ca2d764e47a5d67addbf989a581e9735",
+  "code_sha256": {
+    "controlled_data.py": "8d96cd9ff57ea6d98f58a2b5a63561838db70173036efc4479b7e1c0dd986b9e",
+    "controlled_training.py": "3fa262f2b0c778250d8f5c1785fd331a665a61e8ff0da9b6865133068313384f",
+    "metrics.py": "d43e317029fd39ad7263c1fea4b890c96e43deea583a5e110480015bebb4844d",
+    "baseline.py": "5a668447727b4c8e2c03c747b02d0a86af81591bf2a1a71ef3a15b95a2e01390"
+  },
+  "protocol": {
+    "hidden_sizes": [
+      64,
+      32
+    ],
+    "epochs": 20,
+    "batch_size": 512,
+    "learning_rate": 0.05,
+    "momentum": 0.0,
+    "threshold": 0.5,
+    "max_grad_norm": 1.0,
+    "accountant": "rdp",
+    "delta_rule": "1 / (10 * n_train)",
+    "secure_mode": false,
+    "cpu_threads": 4
+  },
+  "initialization_sha256": "0ec1c6702369be2c7a76da7799d6923110dc62b7b915138a99347f9233d8c6ff",
+  "data_signature": "b5904e237a276cea4bd56aed73d5288b10f5507ab0659b3339a3b09de0559a88",
+  "feature_signature": "2e4e180e64ecb83e916fed8df1d67d489c89d80fc64f06237fe56de15c138e0c",
+  "input_dimension": 87,
+  "n_train": 151320,
+  "n_development": 30264,
+  "target_epsilon": null,
+  "epsilon": null,
+  "delta": null,
+  "noise_multiplier": 0.0,
+  "clipping_norm": null,
+  "private_training_mechanism": false,
+  "secure_mode": null,
+  "privacy_scope": "Per-run individual training records conditional on fixed public auxiliary data; releases compose",
+  "non_private_control": true,
+  "epochs": 20,
+  "steps": 5920,
+  "accounted_steps": 0,
+  "sampling": "shuffled without replacement",
+  "sample_rate": null,
+  "expected_batch_normalizer": null,
+  "gradient_normalization": "actual-batch mean",
+  "private_sampling_noise_rng_exported": false,
+  "nonprivate_sampler_seed": 123,
+  "selection": "fixed final epoch",
+  "test_evaluated": false,
+  "overall": {
+    "n": 30264,
+    "tp": 15247,
+    "tn": 8299,
+    "fp": 4713,
+    "fn": 2005,
+    "accuracy": 0.77802008987576,
+    "balanced_accuracy": 0.7607887356328558,
+    "positive_rate": 0.5700502246893999,
+    "selection_rate": 0.6595294739624636,
+    "tpr": 0.8837815905402272,
+    "fpr": 0.36220411927451585,
+    "ppv": 0.763877755511022,
+    "npv": 0.8054153726708074,
+    "min_conditional_count": 10304,
+    "bce": 0.473891019821167,
+    "roc_auc": 0.846767858490716
+  },
+  "gaps": {
+    "RAC1P": {
+      "accuracy_gap": 0.3366336633663366,
+      "independence": 0.715671415580479,
+      "tpr_gap": null,
+      "fpr_gap": 0.4316981132075472,
+      "separation": null,
+      "ppv_gap": null,
+      "npv_gap": 0.26086956521739135,
+      "sufficiency": null
+    },
+    "RAC1P_SEX": {
+      "accuracy_gap": 0.3465346534653465,
+      "independence": 0.780625,
+      "tpr_gap": null,
+      "fpr_gap": 0.4689922480620155,
+      "separation": null,
+      "ppv_gap": null,
+      "npv_gap": 0.3157894736842105,
+      "sufficiency": null
+    },
+    "SEX": {
+      "accuracy_gap": 0.06651862996954594,
+      "independence": 0.05392319005136348,
+      "tpr_gap": 0.04591626048114006,
+      "fpr_gap": 0.043794507027318075,
+      "separation": 0.04591626048114006,
+      "ppv_gap": 0.09626169132988704,
+      "npv_gap": 0.015632914474965953,
+      "sufficiency": 0.09626169132988704
+    }
+  },
+  "headline_race_groups": [
+    "1",
+    "2",
+    "6",
+    "8",
+    "9"
+  ],
+  "headline_race_min_n": 500,
+  "headline_race_gaps": {
+    "accuracy_gap": 0.026796807113266596,
+    "independence": 0.18033808224714565,
+    "tpr_gap": 0.07769538047777247,
+    "fpr_gap": 0.18856085830558642,
+    "separation": 0.18856085830558642,
+    "ppv_gap": 0.015385324127600186,
+    "npv_gap": 0.030101958746303392,
+    "sufficiency": 0.030101958746303392
+  },
+  "seconds": 24.480732899995928,
+  "environment": {
+    "python": "3.14.6",
+    "torch": "2.13.0+cpu",
+    "opacus": "1.6.0"
+  }
+}

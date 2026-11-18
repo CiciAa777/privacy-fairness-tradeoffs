@@ -40,10 +40,10 @@ The controlled-rerun request takes priority over the earlier intervention-first 
 
 Initialization seeds: **[42, 123, 285, 2026, 2027]**.
 
-- [ ] Run 2 feature policies x 5 seeds x (ordinary SGD + DP1 + DP4 + DP8) = **40 main runs**.
-- [ ] Match model initialization for comparisons within each feature policy/seed. DP sampling/noise use fresh private randomness.
-- [ ] Log exact achieved epsilon/delta, noise/C, sample rate, updates, normalization, runtime, environment, feature/split fingerprints, and completion state.
-- [ ] Save development overall/group statistics and local ignored predictions/checkpoints, with fixed final-epoch evaluation.
+- [x] Run 2 feature policies x 5 seeds x (ordinary SGD + DP1 + DP4 + DP8) = **40 main runs**.
+- [x] Match model initialization for comparisons within each feature policy/seed. DP sampling/noise use fresh private randomness.
+- [x] Log exact achieved epsilon/delta, noise/C, sample rate, updates, normalization, runtime, environment, feature/split fingerprints, and completion state.
+- [x] Save development overall/group statistics and local ignored predictions/checkpoints, with fixed final-epoch evaluation.
 - [ ] Commit/push completed aggregate run artifacts at useful checkpoints. Keep test outcomes reserved.
 
 ## Phase 4: sampling and clipping controls

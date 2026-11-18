@@ -1,0 +1,131 @@
+{
+  "completed": true,
+  "feature_policy": "include_sensitive",
+  "method": "sgd",
+  "model_seed": 285,
+  "is_smoke": false,
+  "training_population": "fixed original training partition",
+  "run_signature": "7dc3504ee7ee3e14502d7c5f28bc9cd46f7323430cd18f32d580cf853bf20561",
+  "code_sha256": {
+    "controlled_data.py": "8d96cd9ff57ea6d98f58a2b5a63561838db70173036efc4479b7e1c0dd986b9e",
+    "controlled_training.py": "3fa262f2b0c778250d8f5c1785fd331a665a61e8ff0da9b6865133068313384f",
+    "metrics.py": "d43e317029fd39ad7263c1fea4b890c96e43deea583a5e110480015bebb4844d",
+    "baseline.py": "5a668447727b4c8e2c03c747b02d0a86af81591bf2a1a71ef3a15b95a2e01390"
+  },
+  "protocol": {
+    "hidden_sizes": [
+      64,
+      32
+    ],
+    "epochs": 20,
+    "batch_size": 512,
+    "learning_rate": 0.05,
+    "momentum": 0.0,
+    "threshold": 0.5,
+    "max_grad_norm": 1.0,
+    "accountant": "rdp",
+    "delta_rule": "1 / (10 * n_train)",
+    "secure_mode": false,
+    "cpu_threads": 4
+  },
+  "initialization_sha256": "1184a199c6cbce93fa48132fd665688d3fef350b972af59f626b9a905d183fa4",
+  "data_signature": "b5904e237a276cea4bd56aed73d5288b10f5507ab0659b3339a3b09de0559a88",
+  "feature_signature": "2e4e180e64ecb83e916fed8df1d67d489c89d80fc64f06237fe56de15c138e0c",
+  "input_dimension": 87,
+  "n_train": 151320,
+  "n_development": 30264,
+  "target_epsilon": null,
+  "epsilon": null,
+  "delta": null,
+  "noise_multiplier": 0.0,
+  "clipping_norm": null,
+  "private_training_mechanism": false,
+  "secure_mode": null,
+  "privacy_scope": "Per-run individual training records conditional on fixed public auxiliary data; releases compose",
+  "non_private_control": true,
+  "epochs": 20,
+  "steps": 5920,
+  "accounted_steps": 0,
+  "sampling": "shuffled without replacement",
+  "sample_rate": null,
+  "expected_batch_normalizer": null,
+  "gradient_normalization": "actual-batch mean",
+  "private_sampling_noise_rng_exported": false,
+  "nonprivate_sampler_seed": 285,
+  "selection": "fixed final epoch",
+  "test_evaluated": false,
+  "overall": {
+    "n": 30264,
+    "tp": 14604,
+    "tn": 8948,
+    "fp": 4064,
+    "fn": 2648,
+    "accuracy": 0.7782183452286545,
+    "balanced_accuracy": 0.7670917334043041,
+    "positive_rate": 0.5700502246893999,
+    "selection_rate": 0.6168384879725086,
+    "tpr": 0.8465105495015071,
+    "fpr": 0.3123270826928989,
+    "ppv": 0.7823012641954146,
+    "npv": 0.7716453949637806,
+    "min_conditional_count": 11596,
+    "bce": 0.47394442558288574,
+    "roc_auc": 0.8468108817885489
+  },
+  "gaps": {
+    "RAC1P": {
+      "accuracy_gap": 0.3168316831683168,
+      "independence": 0.6735374355865413,
+      "tpr_gap": null,
+      "fpr_gap": 0.3781132075471698,
+      "separation": null,
+      "ppv_gap": null,
+      "npv_gap": 0.25,
+      "sufficiency": null
+    },
+    "RAC1P_SEX": {
+      "accuracy_gap": 0.3267326732673267,
+      "independence": 0.75875,
+      "tpr_gap": null,
+      "fpr_gap": 0.41472868217054265,
+      "separation": null,
+      "ppv_gap": null,
+      "npv_gap": 0.33333333333333337,
+      "sufficiency": null
+    },
+    "SEX": {
+      "accuracy_gap": 0.0681133431783294,
+      "independence": 0.08168190575384915,
+      "tpr_gap": 0.07756847261009292,
+      "fpr_gap": 0.023378553904574717,
+      "separation": 0.07756847261009292,
+      "ppv_gap": 0.09005368847525785,
+      "npv_gap": 0.03125752515095359,
+      "sufficiency": 0.09005368847525785
+    }
+  },
+  "headline_race_groups": [
+    "1",
+    "2",
+    "6",
+    "8",
+    "9"
+  ],
+  "headline_race_min_n": 500,
+  "headline_race_gaps": {
+    "accuracy_gap": 0.03397455470737909,
+    "independence": 0.17287076891987463,
+    "tpr_gap": 0.06775220726588504,
+    "fpr_gap": 0.1689628807497842,
+    "separation": 0.1689628807497842,
+    "ppv_gap": 0.021710784237532033,
+    "npv_gap": 0.04793973664232054,
+    "sufficiency": 0.04793973664232054
+  },
+  "seconds": 75.3571368999983,
+  "environment": {
+    "python": "3.14.6",
+    "torch": "2.13.0+cpu",
+    "opacus": "1.6.0"
+  }
+}

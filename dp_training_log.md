@@ -1,3 +1,5 @@
+> **Historical V0 log.** The original results and this log are preserved under [V0/](V0/dp_training_log.md). The active five-seed, two-feature-policy rerun is tracked in [plan.md](plan.md) and `results/controlled_v2/`. Numerical results below describe only the original pilots.
+
 # DP-SGD pilot training log
 
 **Completed November 16, 2026.** Three single-run development pilots; final test records were not loaded. The prediction target remains ESR==1. ESP is excluded. No LFR or equalized-odds intervention is applied yet.

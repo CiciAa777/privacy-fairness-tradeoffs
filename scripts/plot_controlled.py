@@ -30,16 +30,25 @@ def render(root, figure, policy):
             ax.set(title=metric, xlabel='Epsilon', ylabel='Percent / percentage points')
     elif figure == 'group_loss':
         frame = pd.read_csv(root/'aggregate/group_accuracy_losses_mean_std.csv', dtype={'group': str})
-        frame = frame.loc[frame.feature_policy.eq(policy) & frame.attribute.eq('SEX')]
-        fig, ax = plt.subplots(figsize=(6, 4))
-        for group, subset in frame.groupby('group'):
-            subset = subset.loc[subset.method.str.startswith('dp_epsilon_')].copy()
-            subset['epsilon'] = subset.method.str.removeprefix('dp_epsilon_').astype(float)
-            subset = subset.sort_values('epsilon')
-            ax.errorbar(subset.epsilon, subset['mean'], yerr=subset['std'], marker='o', capsize=3,
-                        label={'1': 'Male', '2': 'Female'}[group])
-        ax.set(xlabel='Epsilon', ylabel='Paired accuracy loss (pp)')
-        ax.legend()
+        counts = pd.read_csv(root/'aggregate/group_seed_metrics.csv', dtype={'group': str})
+        supported = set(counts.loc[counts.attribute.eq('RAC1P') & counts.n.ge(500), 'group'])
+        names = {'SEX': {'1': 'Male', '2': 'Female'},
+                 'RAC1P': {'1': 'White', '2': 'Black', '3': 'American Indian', '4': 'Alaska Native',
+                           '5': 'AIAN code5', '6': 'Asian', '7': 'NHPI', '8': 'Some Other Race', '9': 'Two or More Races'}}
+        fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+        for ax, attribute in zip(axes, ['SEX', 'RAC1P']):
+            selected = frame.loc[frame.feature_policy.eq(policy) & frame.attribute.eq(attribute)]
+            if attribute == 'RAC1P':
+                selected = selected.loc[selected.group.isin(supported)]
+            for group, subset in selected.groupby('group'):
+                subset = subset.loc[subset.method.str.startswith('dp_epsilon_')].copy()
+                subset['epsilon'] = subset.method.str.removeprefix('dp_epsilon_').astype(float)
+                subset = subset.sort_values('epsilon')
+                ax.errorbar(subset.epsilon, subset['mean'], yerr=subset['std'], marker='o', capsize=3,
+                            label=names[attribute][group])
+            ax.set(title='Sex groups' if attribute == 'SEX' else 'Race groups with n>=500',
+                   xlabel='Epsilon', ylabel='Paired accuracy loss (pp)')
+            ax.legend(fontsize=8)
     else:
         frame = pd.read_csv(root/'aggregate/group_mean_std.csv', dtype={'group': str})
         frame = frame.loc[frame.feature_policy.eq(policy) & frame.attribute.eq('SEX')]

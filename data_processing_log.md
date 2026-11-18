@@ -1,3 +1,5 @@
+> **Original cohort audit.** The saved cohort/splits remain unchanged. Controlled v2 adds a reference-fitted sensitive-feature inclusion policy alongside the original exclusion policy; see [the controlled audit](results/controlled_v2/audit/README.md).
+
 # Data processing log and review notes
 
 **Prepared November 16, 2026. Status: implemented starting choices, pending your review.**

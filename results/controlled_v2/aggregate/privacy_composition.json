@@ -1,0 +1,12 @@
+{
+  "private_main_runs": 30,
+  "basic_composition_epsilon": 129.9822154032934,
+  "basic_composition_delta": 1.9825535289452816e-05,
+  "with_v0_basic_composition_epsilon": 142.98043694362275,
+  "with_v0_basic_composition_delta": 2.1808088818398097e-05,
+  "excludes_smoke": "Smoke trains on public reference records only",
+  "includes_v0": false,
+  "v0_note": "If released jointly with V0 private outputs, their bounds also compose",
+  "whole_repository_private": false,
+  "nonprivate_models_and_audits": "Not DP releases; per-run bounds do not cover them"
+}

@@ -74,6 +74,15 @@ def summarize_controlled(config):
                 destination.append(pd.read_csv(path.parent/file, dtype={'group': str}).assign(**identity))
     if not rows:
         raise ValueError('No completed main/control runs to aggregate')
+    for key in ['protocol', 'environment', 'data_signature', 'n_train', 'n_development']:
+        if len({json.dumps(summary[key], sort_keys=True) for summary in summaries}) != 1:
+            raise ValueError(f'Inconsistent {key} across completed runs; refusing to mix protocols/environments')
+    for policy in config['feature_policies']:
+        for seed in config['seeds']:
+            matched = [summary for summary in summaries
+                       if summary['feature_policy'] == policy and summary['model_seed'] == seed]
+            if len({summary['initialization_sha256'] for summary in matched}) > 1:
+                raise ValueError(f'Unmatched initialization for {policy}/seed_{seed}')
     seeds = pd.DataFrame(rows)
     if seeds.duplicated(['feature_policy', 'method', 'model_seed']).any():
         raise ValueError('Duplicate completed run')
@@ -163,7 +172,9 @@ def summarize_controlled(config):
     present = {(s['feature_policy'], s['method'], s['model_seed']) for s in summaries}
     missing = sorted(expected-present)
     private = [s for s in summaries if s['private_training_mechanism']]
-    status = dict(expected_main_runs=40, expected_control_runs=20, completed_runs=len(summaries),
+    v0 = json.loads((ROOT/'V0/results/dp_pilot/composition.json').read_text(encoding='utf-8'))
+    status = dict(expected_main_runs=len(config['feature_policies'])*len(config['seeds'])*len(MAIN),
+        expected_control_runs=len(config['feature_policies'])*len(config['seeds'])*len(CONTROLS), completed_runs=len(summaries),
         completed_main_runs=sum(s['method'] in MAIN for s in summaries),
         completed_control_runs=sum(s['method'] in CONTROLS for s in summaries),
         complete=not missing, missing=[dict(feature_policy=p, method=m, model_seed=s) for p, m, s in missing],
@@ -173,6 +184,8 @@ def summarize_controlled(config):
     json_write(out/'privacy_composition.json', dict(
         private_main_runs=len(private), basic_composition_epsilon=sum(s['epsilon'] for s in private),
         basic_composition_delta=sum(s['delta'] for s in private),
+        with_v0_basic_composition_epsilon=sum(s['epsilon'] for s in private)+v0['basic_composition_epsilon'],
+        with_v0_basic_composition_delta=sum(s['delta'] for s in private)+v0['basic_composition_delta'],
         excludes_smoke='Smoke trains on public reference records only',
         includes_v0=False, v0_note='If released jointly with V0 private outputs, their bounds also compose',
         whole_repository_private=False, nonprivate_models_and_audits='Not DP releases; per-run bounds do not cover them'))
@@ -185,6 +198,21 @@ def summarize_controlled(config):
     json_write(root/'plot_plan.json', dict(rendered=False, review_required_before_publication=True,
                variability='Error bars represent sample SD across seeds, not confidence intervals', figures=specs))
     write_findings(config, root, seeds, stats, paired_stats, budget_stats, persistence, status)
+    (out/'README.md').write_text('''# Aggregate table conventions
+
+- `seed_metrics.csv`: one row per completed policy/method/initialization seed. Raw rates and fairness gaps are fractions; multiply by100 for percent or percentage points.
+- `metrics_mean_std.csv/json`: mean, sample SD (ddof=1), valid seed count, and completed seed count for each metric. Undefined metrics remain missing, never zero. Means use valid values only; a metric with fewer valid than completed seeds does not describe every seed.
+- `paired_vs_sgd_*`: method minus same-policy/same-seed SGD. `accuracy_loss_pp` reverses the sign and multiplies by100, so positive means harm. Other differences retain their original units.
+- `group_*`: all sex, nine race, and race-by-sex groups; counts, rates, and denominator flags are retained. Headline race gaps use a separately labeled n>=500 comparison.
+- `budget_differences_*`: later-listed DP budget minus earlier-listed budget, paired by initialization within policy. Fresh sampling/noise still vary.
+- `feature_policy_differences_*`: include_sensitive minus exclude_sensitive at the same method/seed. Input dimensions differ, so identical weights across policies are not claimed.
+- `loss_disparity_*`: group loss ranges computed per run before averaging; columns ending `_pp` are already percentage points.
+- `esr_*`, `within_esr_*`, and `sex_fpr_*`: development-only ESR distributions/errors, FP composition, and female-minus-male FPR comparisons. Counts are observations per fixed development set, not additional people across seeds. ESR1 is positive, so its FPR is undefined.
+- `completion.json`: exact observed run counts and missing configurations. Missing configurations are not fabricated.
+- `privacy_composition.json`: conservative basic composition for released private v2 mechanisms, plus a separate V0+v2 bound. Public-reference smoke runs do not train on the private partition. Non-private models/audits are outside those guarantees.
+
+Seed variation is training variation on this fixed split, not population-sampling uncertainty. The human-readable findings table converts units for display. No publication figures are generated by aggregation.
+''', encoding='utf-8')
     print(f'Aggregated {len(summaries)} completed runs; missing={len(missing)}. No figures rendered.', flush=True)
     return status
 
@@ -194,12 +222,14 @@ def write_findings(config, root, seeds, stats, paired, budget_stats, persistence
         row = stats.loc[stats.feature_policy.eq(policy) & stats.method.eq(method) & stats.metric.eq(metric)]
         return row.iloc[0] if len(row) else None
     def formatted(row, scale=100):
-        if row is None or pd.isna(row['mean']):
+        if row is None:
+            return 'not yet completed'
+        if pd.isna(row['mean']):
             return 'undefined'
         sd = 'undefined' if pd.isna(row['std']) else f'{scale*row["std"]:.3f}'
         return f'{scale*row["mean"]:.3f} +/- {sd} (n={int(row["valid_seeds"])})'
     text = ['# Controlled v2: baseline findings\n',
-            f'Completed main runs: **{status["completed_main_runs"]}/40**; controls: **{status["completed_control_runs"]}/20**. '
+            f'Completed main runs: **{status["completed_main_runs"]}/{status["expected_main_runs"]}**; controls: **{status["completed_control_runs"]}/{status["expected_control_runs"]}**. '
             'Development data only. Means +/- sample SD across training seeds; no population-sampling uncertainty is estimated.\n',
             '## Overall accuracy and selected fairness outcomes\n']
     for policy in config['feature_policies']:
@@ -253,4 +283,64 @@ def write_findings(config, root, seeds, stats, paired, budget_stats, persistence
              'From the repository root: ` .\\.venv\\Scripts\\python.exe scripts\\run_controlled.py --stage main `, '
              'then `--stage controls`, then `--stage summarize`. Completed matching runs are skipped. '
              'See the root README for preparation, tests, and interrupted-lock handling.\n']
+    # Numerical interpretations use the aggregate tables, never hard-coded pilot trends.
+    extra = ['## Concrete training contrasts\n']
+    for policy in config['feature_policies']:
+        rates = {method: stat(policy, method, 'accuracy') for method in MAIN+CONTROLS}
+        if all(rates[method] is not None for method in ['sgd', 'poisson_unclipped', 'poisson_clipped', 'dp_epsilon_1']):
+            changes = [100*(rates[b]['mean']-rates[a]['mean']) for a, b in
+                       [('sgd', 'poisson_unclipped'), ('poisson_unclipped', 'poisson_clipped'),
+                        ('poisson_clipped', 'dp_epsilon_1')]]
+            extra += [f'- {policy}: SGD -> Poisson-unclipped accuracy change {changes[0]:+.3f} pp; '
+                      f'Poisson-unclipped -> clipped {changes[1]:+.3f} pp; '
+                      f'clipped -> DP1 {changes[2]:+.3f} pp.\n']
+        budget = budget_stats.loc[budget_stats.feature_policy.eq(policy) &
+                 budget_stats.comparison.eq('dp_epsilon_8 minus dp_epsilon_1') & budget_stats.metric.eq('accuracy')]
+        if len(budget):
+            row = budget.iloc[0]
+            extra += [f'- {policy}: epsilon8 minus epsilon1 accuracy is {100*row["mean"]:+.3f} pp '
+                      f'(paired sample SD {100*row["std"]:.3f} pp; {int(row["valid_seeds"])} valid seeds). '
+                      'This is a variability comparison, not a significance claim.\n']
+    extra += ['The two non-private Poisson controls share sample streams; DP draws fresh samples/noise. '
+              'Use these contrasts to distinguish sampling/normalization and clipping from additional noise, '
+              'while retaining seed variability.\n', '## Effect of including sensitive predictors\n']
+    feature_stats = pd.read_csv(root/'aggregate/feature_policy_differences_mean_std.csv')
+    feature_display = feature_stats.loc[feature_stats.metric.isin(['accuracy', 'SEX_separation', 'RAC1P_n500_separation'])].copy()
+    feature_display[['mean', 'std']] *= 100
+    extra += [markdown(feature_display[['method', 'metric', 'mean', 'std', 'valid_seeds']].round(5)), '\n',
+              'Differences are include_sensitive minus exclude_sensitive, in percentage points. '
+              'Positive accuracy difference favors inclusion; positive gap difference indicates more disparity on that criterion.\n']
+    esr_stats = pd.read_csv(root/'aggregate/esr_mean_std.csv', dtype={'group': str})
+    distribution = pd.read_csv(root/'audit/development_esr_distributions.csv', dtype={'group': str})
+    within = pd.read_csv(root/'aggregate/within_esr_sex_fpr_difference_seed.csv')
+    primary = config['feature_policies'][0]
+    chosen = esr_stats.loc[esr_stats.feature_policy.eq(primary) & esr_stats.method.eq('dp_epsilon_1') &
+                           esr_stats.attribute.eq('SEX')]
+    descriptions = {2: 'Civilian employed, temporarily absent', 3: 'Unemployed',
+                    4: 'Armed forces, at work', 5: 'Armed forces, temporarily absent', 6: 'Not in labor force'}
+    esr_rows, composition_rows = [], []
+    if len(chosen):
+        for code, description in descriptions.items():
+            values = {}
+            for group in ['1', '2']:
+                group_stats = chosen.loc[chosen.group.eq(group) & chosen.ESR.eq(code)]
+                count = distribution.loc[distribution.attribute.eq('SEX') & distribution.group.eq(group) & distribution.ESR.eq(code), 'n'].iloc[0]
+                fpr = group_stats.loc[group_stats.metric.eq('fpr')].iloc[0]
+                share = group_stats.loc[group_stats.metric.eq('fp_composition')].iloc[0]
+                values[group] = (int(count), formatted(fpr), formatted(share))
+            differences = within.loc[within.feature_policy.eq(primary) & within.method.eq('dp_epsilon_1') &
+                                      within.ESR.eq(code), 'female_minus_male_fpr_pp'].dropna()
+            persistence_label = f'{int((differences > 0).sum())}/{len(differences)}'
+            esr_rows.append(dict(ESR=code, Meaning=description, Male_n=values['1'][0], Female_n=values['2'][0],
+                                 Male_FPR=values['1'][1], Female_FPR=values['2'][1], Female_higher_seeds=persistence_label))
+            composition_rows.append(dict(ESR=code, Male_FP_share=values['1'][2], Female_FP_share=values['2'][2]))
+        extra += [f'## ESR diagnostic example: {primary}, DP epsilon1\n', markdown(pd.DataFrame(esr_rows)), '\n',
+                  'FPR entries are percent mean +/- sample SD. Counts are development people in each actual-negative ESR category, '
+                  'not five times that population. Categories with fewer than30 people have weak support even if the training-seed ordering is consistent. '
+                  'ESR1 is actual positive and has no FPR denominator.\n',
+                  'Share of each sex group\'s false positives contributed by each ESR category (percent):\n',
+                  markdown(pd.DataFrame(composition_rows)), '\n',
+                  'These tables distinguish within-category error rates from differences in the composition of the negative class. '
+                  'They do not justify relabeling ESR2/4/5 without a separate target-definition decision.\n']
+    text += extra
     (root/'FINDINGS.md').write_text('\n'.join(text), encoding='utf-8')

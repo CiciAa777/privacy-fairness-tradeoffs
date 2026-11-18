@@ -1,0 +1,131 @@
+{
+  "completed": true,
+  "feature_policy": "exclude_sensitive",
+  "method": "sgd",
+  "model_seed": 2026,
+  "is_smoke": false,
+  "training_population": "fixed original training partition",
+  "run_signature": "d9f30b587451a7e5018c645d7b69b15503c584910ff9b8ec99ec130054ec2e32",
+  "code_sha256": {
+    "controlled_data.py": "8d96cd9ff57ea6d98f58a2b5a63561838db70173036efc4479b7e1c0dd986b9e",
+    "controlled_training.py": "3fa262f2b0c778250d8f5c1785fd331a665a61e8ff0da9b6865133068313384f",
+    "metrics.py": "d43e317029fd39ad7263c1fea4b890c96e43deea583a5e110480015bebb4844d",
+    "baseline.py": "5a668447727b4c8e2c03c747b02d0a86af81591bf2a1a71ef3a15b95a2e01390"
+  },
+  "protocol": {
+    "hidden_sizes": [
+      64,
+      32
+    ],
+    "epochs": 20,
+    "batch_size": 512,
+    "learning_rate": 0.05,
+    "momentum": 0.0,
+    "threshold": 0.5,
+    "max_grad_norm": 1.0,
+    "accountant": "rdp",
+    "delta_rule": "1 / (10 * n_train)",
+    "secure_mode": false,
+    "cpu_threads": 4
+  },
+  "initialization_sha256": "c78aa71466385b417cb2e4e1f9fde9ab19c0e4df2a0afa802bca000a63171d12",
+  "data_signature": "b5904e237a276cea4bd56aed73d5288b10f5507ab0659b3339a3b09de0559a88",
+  "feature_signature": "31117425cd883f60f9e9e9fb3c9a7418b23af52718e4ff51ce7e93c54f5c051d",
+  "input_dimension": 77,
+  "n_train": 151320,
+  "n_development": 30264,
+  "target_epsilon": null,
+  "epsilon": null,
+  "delta": null,
+  "noise_multiplier": 0.0,
+  "clipping_norm": null,
+  "private_training_mechanism": false,
+  "secure_mode": null,
+  "privacy_scope": "Per-run individual training records conditional on fixed public auxiliary data; releases compose",
+  "non_private_control": true,
+  "epochs": 20,
+  "steps": 5920,
+  "accounted_steps": 0,
+  "sampling": "shuffled without replacement",
+  "sample_rate": null,
+  "expected_batch_normalizer": null,
+  "gradient_normalization": "actual-batch mean",
+  "private_sampling_noise_rng_exported": false,
+  "nonprivate_sampler_seed": 2026,
+  "selection": "fixed final epoch",
+  "test_evaluated": false,
+  "overall": {
+    "n": 30264,
+    "tp": 14502,
+    "tn": 8765,
+    "fp": 4247,
+    "fn": 2750,
+    "accuracy": 0.7688012159661645,
+    "balanced_accuracy": 0.7571035839217846,
+    "positive_rate": 0.5700502246893999,
+    "selection_rate": 0.6195149352365847,
+    "tpr": 0.8405981915140274,
+    "fpr": 0.326391023670458,
+    "ppv": 0.7734812523334578,
+    "npv": 0.7611810681719496,
+    "min_conditional_count": 11515,
+    "bce": 0.4935007095336914,
+    "roc_auc": 0.8305173089614118
+  },
+  "gaps": {
+    "RAC1P": {
+      "accuracy_gap": 0.2920792079207921,
+      "independence": 0.6808849910304963,
+      "tpr_gap": null,
+      "fpr_gap": 0.40679245283018867,
+      "separation": null,
+      "ppv_gap": null,
+      "npv_gap": 0.26951672862453535,
+      "sufficiency": null
+    },
+    "RAC1P_SEX": {
+      "accuracy_gap": 0.3160682754561507,
+      "independence": 0.6978653530377669,
+      "tpr_gap": null,
+      "fpr_gap": 0.4962871287128713,
+      "separation": null,
+      "ppv_gap": null,
+      "npv_gap": 0.2889305816135085,
+      "sufficiency": null
+    },
+    "SEX": {
+      "accuracy_gap": 0.06475727324121361,
+      "independence": 0.009114013789390807,
+      "tpr_gap": 0.004331129374117504,
+      "fpr_gap": 0.12364716150667848,
+      "separation": 0.12364716150667848,
+      "ppv_gap": 0.1280924701804127,
+      "npv_gap": 0.03798570288612235,
+      "sufficiency": 0.1280924701804127
+    }
+  },
+  "headline_race_groups": [
+    "1",
+    "2",
+    "6",
+    "8",
+    "9"
+  ],
+  "headline_race_min_n": 500,
+  "headline_race_gaps": {
+    "accuracy_gap": 0.04728826917247653,
+    "independence": 0.16021832436382955,
+    "tpr_gap": 0.055175833045082445,
+    "fpr_gap": 0.1767270933530645,
+    "separation": 0.1767270933530645,
+    "ppv_gap": 0.02516220330307506,
+    "npv_gap": 0.08871005268573151,
+    "sufficiency": 0.08871005268573151
+  },
+  "seconds": 66.7691913000017,
+  "environment": {
+    "python": "3.14.6",
+    "torch": "2.13.0+cpu",
+    "opacus": "1.6.0"
+  }
+}

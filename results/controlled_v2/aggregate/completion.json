@@ -1,0 +1,82 @@
+{
+  "expected_main_runs": 40,
+  "expected_control_runs": 20,
+  "completed_runs": 46,
+  "completed_main_runs": 40,
+  "completed_control_runs": 6,
+  "complete": false,
+  "missing": [
+    {
+      "feature_policy": "exclude_sensitive",
+      "method": "poisson_clipped",
+      "model_seed": 123
+    },
+    {
+      "feature_policy": "exclude_sensitive",
+      "method": "poisson_clipped",
+      "model_seed": 285
+    },
+    {
+      "feature_policy": "exclude_sensitive",
+      "method": "poisson_clipped",
+      "model_seed": 2026
+    },
+    {
+      "feature_policy": "exclude_sensitive",
+      "method": "poisson_clipped",
+      "model_seed": 2027
+    },
+    {
+      "feature_policy": "exclude_sensitive",
+      "method": "poisson_unclipped",
+      "model_seed": 123
+    },
+    {
+      "feature_policy": "exclude_sensitive",
+      "method": "poisson_unclipped",
+      "model_seed": 285
+    },
+    {
+      "feature_policy": "exclude_sensitive",
+      "method": "poisson_unclipped",
+      "model_seed": 2026
+    },
+    {
+      "feature_policy": "exclude_sensitive",
+      "method": "poisson_unclipped",
+      "model_seed": 2027
+    },
+    {
+      "feature_policy": "include_sensitive",
+      "method": "poisson_clipped",
+      "model_seed": 285
+    },
+    {
+      "feature_policy": "include_sensitive",
+      "method": "poisson_clipped",
+      "model_seed": 2026
+    },
+    {
+      "feature_policy": "include_sensitive",
+      "method": "poisson_clipped",
+      "model_seed": 2027
+    },
+    {
+      "feature_policy": "include_sensitive",
+      "method": "poisson_unclipped",
+      "model_seed": 285
+    },
+    {
+      "feature_policy": "include_sensitive",
+      "method": "poisson_unclipped",
+      "model_seed": 2026
+    },
+    {
+      "feature_policy": "include_sensitive",
+      "method": "poisson_unclipped",
+      "model_seed": 2027
+    }
+  ],
+  "seed_variation": "Training/initialization/sampling/noise variation on a fixed split, not population uncertainty",
+  "final_test_evaluated": false
+}

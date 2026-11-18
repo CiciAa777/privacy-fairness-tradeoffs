@@ -31,6 +31,7 @@ On a fresh clone, download/prepare the original fixed cohort with `.\.venv\Scrip
 .\.venv\Scripts\python.exe scripts\run_controlled.py --stage smoke
 .\.venv\Scripts\python.exe scripts\run_controlled.py --stage main
 .\.venv\Scripts\python.exe scripts\run_controlled.py --stage controls
+.\.venv\Scripts\python.exe scripts\run_controlled.py --stage verify
 .\.venv\Scripts\python.exe scripts\run_controlled.py --stage summarize
 ```
 

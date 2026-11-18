@@ -1,0 +1,131 @@
+{
+  "completed": true,
+  "feature_policy": "exclude_sensitive",
+  "method": "dp_epsilon_8",
+  "model_seed": 2027,
+  "is_smoke": false,
+  "training_population": "fixed original training partition",
+  "run_signature": "31d55d2652e211afa59284a58f5b9d2bbfc4e3fb692da02e96a00dfa078ac27e",
+  "code_sha256": {
+    "controlled_data.py": "8d96cd9ff57ea6d98f58a2b5a63561838db70173036efc4479b7e1c0dd986b9e",
+    "controlled_training.py": "3fa262f2b0c778250d8f5c1785fd331a665a61e8ff0da9b6865133068313384f",
+    "metrics.py": "d43e317029fd39ad7263c1fea4b890c96e43deea583a5e110480015bebb4844d",
+    "baseline.py": "5a668447727b4c8e2c03c747b02d0a86af81591bf2a1a71ef3a15b95a2e01390"
+  },
+  "protocol": {
+    "hidden_sizes": [
+      64,
+      32
+    ],
+    "epochs": 20,
+    "batch_size": 512,
+    "learning_rate": 0.05,
+    "momentum": 0.0,
+    "threshold": 0.5,
+    "max_grad_norm": 1.0,
+    "accountant": "rdp",
+    "delta_rule": "1 / (10 * n_train)",
+    "secure_mode": false,
+    "cpu_threads": 4
+  },
+  "initialization_sha256": "a39f097f8d8c1275b11a6aa494ca562bcc9da5d59b55c2005ca385c201d27438",
+  "data_signature": "b5904e237a276cea4bd56aed73d5288b10f5507ab0659b3339a3b09de0559a88",
+  "feature_signature": "31117425cd883f60f9e9e9fb3c9a7418b23af52718e4ff51ce7e93c54f5c051d",
+  "input_dimension": 77,
+  "n_train": 151320,
+  "n_development": 30264,
+  "target_epsilon": 8.0,
+  "epsilon": 7.999650510019857,
+  "delta": 6.608511763150938e-07,
+  "noise_multiplier": 0.5974578857421875,
+  "clipping_norm": 1.0,
+  "private_training_mechanism": true,
+  "secure_mode": false,
+  "privacy_scope": "Per-run individual training records conditional on fixed public auxiliary data; releases compose",
+  "non_private_control": false,
+  "epochs": 20,
+  "steps": 5920,
+  "accounted_steps": 5920,
+  "sampling": "Poisson",
+  "sample_rate": 0.0033783783783783786,
+  "expected_batch_normalizer": 511,
+  "gradient_normalization": "clipped/unclipped gradient sum divided by expected batch normalizer",
+  "private_sampling_noise_rng_exported": false,
+  "nonprivate_sampler_seed": null,
+  "selection": "fixed final epoch",
+  "test_evaluated": false,
+  "overall": {
+    "n": 30264,
+    "tp": 15415,
+    "tn": 7486,
+    "fp": 5526,
+    "fn": 1837,
+    "accuracy": 0.7567076394395982,
+    "balanced_accuracy": 0.7344173428454884,
+    "positive_rate": 0.5700502246893999,
+    "selection_rate": 0.691944224160719,
+    "tpr": 0.8935195919313703,
+    "fpr": 0.42468490624039346,
+    "ppv": 0.736115753784442,
+    "npv": 0.8029604204655154,
+    "min_conditional_count": 9323,
+    "bce": 0.7560129761695862,
+    "roc_auc": 0.8104493438220968
+  },
+  "gaps": {
+    "RAC1P": {
+      "accuracy_gap": 0.3267326732673267,
+      "independence": 0.7769020915428918,
+      "tpr_gap": null,
+      "fpr_gap": 0.5479245283018868,
+      "separation": null,
+      "ppv_gap": null,
+      "npv_gap": 0.21092008914358484,
+      "sufficiency": null
+    },
+    "RAC1P_SEX": {
+      "accuracy_gap": 0.3366336633663366,
+      "independence": 0.7822248381400824,
+      "tpr_gap": null,
+      "fpr_gap": 0.6225247524752475,
+      "separation": null,
+      "ppv_gap": null,
+      "npv_gap": 0.2558139534883721,
+      "sufficiency": null
+    },
+    "SEX": {
+      "accuracy_gap": 0.07193696916620407,
+      "independence": 0.0068446001077193674,
+      "tpr_gap": 0.004297364483045518,
+      "fpr_gap": 0.10880997427643169,
+      "separation": 0.10880997427643169,
+      "ppv_gap": 0.1185921793387773,
+      "npv_gap": 0.034272582707038146,
+      "sufficiency": 0.1185921793387773
+    }
+  },
+  "headline_race_groups": [
+    "1",
+    "2",
+    "6",
+    "8",
+    "9"
+  ],
+  "headline_race_min_n": 500,
+  "headline_race_gaps": {
+    "accuracy_gap": 0.05159442255228863,
+    "independence": 0.20090209154289185,
+    "tpr_gap": 0.05712838326820091,
+    "fpr_gap": 0.2577284498705142,
+    "separation": 0.2577284498705142,
+    "ppv_gap": 0.02768950147254523,
+    "npv_gap": 0.0646936740492452,
+    "sufficiency": 0.0646936740492452
+  },
+  "seconds": 168.3407348999972,
+  "environment": {
+    "python": "3.14.6",
+    "torch": "2.13.0+cpu",
+    "opacus": "1.6.0"
+  }
+}

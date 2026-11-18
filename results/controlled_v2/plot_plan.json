@@ -1,0 +1,34 @@
+{
+  "rendered": false,
+  "review_required_before_publication": true,
+  "variability": "Error bars represent sample SD across seeds, not confidence intervals",
+  "figures": [
+    {
+      "id": "accuracy_fairness",
+      "metrics": [
+        "accuracy",
+        "SEX_separation",
+        "RAC1P_n500_separation"
+      ],
+      "source": "aggregate/metrics_mean_std.csv",
+      "description": "Accuracy and selected fairness gaps versus epsilon"
+    },
+    {
+      "id": "group_loss",
+      "metrics": [
+        "accuracy_loss_pp"
+      ],
+      "source": "aggregate/group_accuracy_losses_mean_std.csv",
+      "description": "Paired DP-versus-SGD accuracy losses by supported group"
+    },
+    {
+      "id": "sex_rates",
+      "metrics": [
+        "tpr",
+        "fpr"
+      ],
+      "source": "aggregate/group_mean_std.csv",
+      "description": "Male/female TPR and FPR with ordinary and clipping-only controls"
+    }
+  ]
+}
