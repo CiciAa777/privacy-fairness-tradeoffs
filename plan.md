@@ -23,18 +23,18 @@ The controlled-rerun request takes priority over the earlier intervention-first 
 
 - [x] Create `V0/` and move existing results, figures, reports, and executed notebooks into it; verify moved files by SHA-256.
 - [x] Save original configs, code, proposal, plan, logs, data manifest, and `V0/SETTINGS.txt`.
-- [ ] Review actual filters, feature names, labels, missingness, split alignment, initialization, gradient normalization, and privacy accounting; document findings in `results/controlled_v2/audit/`.
-- [ ] Commit/push the preservation checkpoint before changing experiment behavior.
+- [x] Review actual filters, feature names, labels, missingness, split alignment, initialization, gradient normalization, and privacy accounting; document findings in `results/controlled_v2/audit/`.
+- [x] Commit/push the preservation checkpoint before changing experiment behavior (`c790371`).
 
 ## Phase 2: controlled implementation and validation (November 17-18)
 
-- [ ] Prepare two feature policies on the existing records/splits. Keep original sensitive labels for auditing.
-- [ ] Use the shared MLP input->64->32->1, ReLU, SGD lr0.05/momentum0, 20 epochs, batch512, threshold0.5, fixed final epoch.
-- [ ] Implement ordinary shuffled SGD, DP-SGD epsilon1/4/8, Poisson SGD without clipping/noise, and Poisson per-example clipped C=1 SGD without noise.
-- [ ] Match DP/control sampling, number of optimizer updates, expected-batch gradient normalization, and clipping implementation. Label both controls non-private.
-- [ ] Add deterministic tests comparing manual clipping-only updates with the zero-noise DP optimizer; check leakage, fixed splits, rates/undefined cases, accounting, and paired aggregation.
-- [ ] Make runs resumable with unique policy/method/seed directories; preserve completed artifacts and never export private sampling/noise RNG state or raw training gradients.
-- [ ] Run synthetic and real-data smoke checks, then commit/push the implementation checkpoint.
+- [x] Prepare two feature policies on the existing records/splits. Keep original sensitive labels for auditing (87 primary/77 secondary encoded columns).
+- [x] Use the shared MLP input->64->32->1, ReLU, SGD lr0.05/momentum0, 20 epochs, batch512, threshold0.5, fixed final epoch.
+- [x] Implement ordinary shuffled SGD, DP-SGD epsilon1/4/8, Poisson SGD without clipping/noise, and Poisson per-example clipped C=1 SGD without noise.
+- [x] Match DP/control sampling, number of optimizer updates, expected-batch gradient normalization, and clipping implementation. Label both controls non-private.
+- [x] Add deterministic tests comparing manual clipping-only updates with the zero-noise DP optimizer; check leakage, fixed splits, rates/undefined cases, accounting, and paired aggregation.
+- [x] Make runs resumable with unique policy/method/seed directories; preserve completed artifacts and never export private sampling/noise RNG state or raw training gradients.
+- [x] Run synthetic and public-reference smoke checks (12 smoke configurations passed), then commit/push implementation (`c94624f`; paired-aggregation tests added afterward).
 
 ## Phase 3: repeated main experiments (start after validation)
 

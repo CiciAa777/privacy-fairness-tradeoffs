@@ -16,9 +16,33 @@ from src.baseline import make_model
 from src.controlled_data import POLICIES, feature_frame
 from src.controlled_training import gaps_from_frame, esr_diagnostics
 from src.metrics import binary_metrics
+from src.controlled_analysis import aggregate, paired_difference
 
 
 class ControlledTests(unittest.TestCase):
+    def test_paired_seed_aggregation_and_sample_sd(self):
+        frame = pd.DataFrame([
+            dict(feature_policy='include', method='sgd', model_seed=1, accuracy=.9),
+            dict(feature_policy='include', method='sgd', model_seed=2, accuracy=.8),
+            dict(feature_policy='include', method='dp', model_seed=2, accuracy=.75),
+            dict(feature_policy='include', method='dp', model_seed=1, accuracy=.8),
+            dict(feature_policy='exclude', method='sgd', model_seed=1, accuracy=.6),
+            dict(feature_policy='exclude', method='dp', model_seed=1, accuracy=.55)])
+        pairs = paired_difference(frame, ['accuracy'])
+        summary = aggregate(pairs, ['feature_policy', 'method'], ['accuracy'])
+        include = summary.loc[summary.feature_policy.eq('include')].iloc[0]
+        self.assertAlmostEqual(include['mean'], -.075)
+        self.assertAlmostEqual(include['std'], np.std([-.1, -.05], ddof=1))
+        exclude = summary.loc[summary.feature_policy.eq('exclude')].iloc[0]
+        self.assertAlmostEqual(exclude['mean'], -.05)
+        self.assertTrue(pd.isna(exclude['std']))
+        with self.assertRaises(ValueError):
+            paired_difference(frame.loc[~((frame.method == 'sgd') & (frame.model_seed == 2))], ['accuracy'])
+        frame['undefined'] = np.nan
+        missing = aggregate(frame, ['feature_policy', 'method'], ['undefined'])
+        self.assertTrue(missing['mean'].isna().all())
+        self.assertTrue(missing.valid_seeds.eq(0).all())
+
     def test_feature_policies_and_missing_categories(self):
         self.assertEqual(len(POLICIES['include_sensitive']), 16)
         self.assertEqual(len(POLICIES['exclude_sensitive']), 14)
