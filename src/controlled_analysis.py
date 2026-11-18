@@ -141,6 +141,14 @@ def summarize_controlled(config):
         budget_rows.append(differences)
     budgets = pd.concat(budget_rows, ignore_index=True)
     budgets.to_csv(out/'budget_differences_seed.csv', index=False)
+    ordering = []
+    for (policy, comparison), block in budgets.groupby(['feature_policy', 'comparison']):
+        differences = 100*block.accuracy.dropna()
+        ordering.append(dict(feature_policy=policy, comparison=comparison, valid_seeds=len(differences),
+            later_budget_higher_seeds=int((differences > 0).sum()), later_budget_lower_seeds=int((differences < 0).sum()),
+            tied_seeds=int((differences == 0).sum()), accuracy_change_pp=differences.mean(),
+            accuracy_change_sample_sd_pp=differences.std(ddof=1)))
+    pd.DataFrame(ordering).to_csv(out/'budget_accuracy_ordering.csv', index=False)
     budget_stats = aggregate(budgets, ['feature_policy', 'comparison'], metrics)
     budget_stats.to_csv(out/'budget_differences_mean_std.csv', index=False)
     feature_rows = []
@@ -226,12 +234,44 @@ def write_findings(config, root, seeds, stats, paired, budget_stats, persistence
             return 'not yet completed'
         if pd.isna(row['mean']):
             return 'undefined'
-        sd = 'undefined' if pd.isna(row['std']) else f'{scale*row["std"]:.3f}'
-        return f'{scale*row["mean"]:.3f} +/- {sd} (n={int(row["valid_seeds"])})'
+        precision = 4 if scale == 1 else 3
+        sd = 'undefined' if pd.isna(row['std']) else f'{scale*row["std"]:.{precision}f}'
+        return f'{scale*row["mean"]:.{precision}f} +/- {sd} (n={int(row["valid_seeds"])})'
     text = ['# Controlled v2: baseline findings\n',
             f'Completed main runs: **{status["completed_main_runs"]}/{status["expected_main_runs"]}**; controls: **{status["completed_control_runs"]}/{status["expected_control_runs"]}**. '
             'Development data only. Means +/- sample SD across training seeds; no population-sampling uncertainty is estimated.\n',
             '## Overall accuracy and selected fairness outcomes\n']
+    if status['complete']:
+        headline = [f'## What persists across the {len(config["seeds"])} seeds\n']
+        for policy in config['feature_policies']:
+            unclipped = stat(policy, 'poisson_unclipped', 'accuracy')['mean']
+            clipped = stat(policy, 'poisson_clipped', 'accuracy')['mean']
+            dp1 = stat(policy, 'dp_epsilon_1', 'accuracy')['mean']
+            headline += [f'- **{policy}:** adding clipping to matched non-private Poisson SGD changes '
+                         f'mean accuracy by {100*(clipped-unclipped):+.3f} pp; DP1 minus the clipped/no-noise '
+                         f'control is {100*(dp1-clipped):+.3f} pp. '
+                         'These contrasts identify where the measured utility changes occur.\n']
+            private = pd.read_csv(root/'aggregate/paired_vs_sgd_seed.csv')
+            selected = private.loc[private.feature_policy.eq(policy) & private.method.eq('dp_epsilon_1')]
+            headline += [f'- **{policy}, DP1 versus SGD:** sex separation improves in '
+                         f'{int((selected.SEX_separation < 0).sum())}/{len(selected)} seeds; '
+                         f'headline race separation worsens in {int((selected.RAC1P_n500_separation > 0).sum())}/{len(selected)}. '
+                         'A single statement that DP improved or worsened every notion/group would be inaccurate.\n']
+        budget_order = pd.read_csv(root/'aggregate/budget_accuracy_ordering.csv')
+        for policy in config['feature_policies']:
+            fpr = persistence.loc[persistence.feature_policy.eq(policy) & persistence.method.eq('dp_epsilon_1')].iloc[0]
+            order = budget_order.loc[budget_order.feature_policy.eq(policy) &
+                                      budget_order.comparison.eq('dp_epsilon_8 minus dp_epsilon_1')].iloc[0]
+            headline += [f'- **{policy}, FPR and budget persistence:** female FPR is higher in '
+                         f'{int(fpr.female_higher_seeds)}/{int(fpr.valid_seeds)} DP1 seeds. '
+                         f'Epsilon8 accuracy is higher than epsilon1 in {int(order.later_budget_higher_seeds)}/'
+                         f'{int(order.valid_seeds)} seeds and lower in {int(order.later_budget_lower_seeds)}/'
+                         f'{int(order.valid_seeds)}. Mean change is {order.accuracy_change_pp:+.3f} pp. '
+                         'Use these observed signs rather than dismissing every budget difference as random noise.\n']
+        headline += ['Ten-seed follow-up is recommended before final generalizations. Headline race gaps use the fixed '
+                     'n>=500 development groups (White-alone, Black-alone, Asian-alone, Some Other Race-alone, '
+                     'Two or More Races). All nine races/intersections remain in detailed CSVs.\n']
+        text[2:2] = headline
     for policy in config['feature_policies']:
         records = []
         for method in MAIN+CONTROLS:
@@ -248,11 +288,11 @@ def write_findings(config, root, seeds, stats, paired, budget_stats, persistence
              markdown(private_losses[['feature_policy', 'method', 'mean', 'std', 'valid_seeds']].round(5)), '\n',
              'Positive loss means DP was less accurate. Each difference is calculated within policy/seed first, then averaged.\n',
              '## Budget differences versus training variation\n']
-    display = budget_stats.loc[budget_stats.metric.isin(['accuracy', 'SEX_separation', 'RAC1P_n500_separation'])].copy()
-    display[['mean', 'std']] *= 100
-    text += [markdown(display[['feature_policy', 'comparison', 'metric', 'mean', 'std', 'valid_seeds']].round(5)), '\n',
+    display = pd.read_csv(root/'aggregate/budget_accuracy_ordering.csv')
+    text += [markdown(display.round(5)), '\n',
              'Differences above are later method minus earlier method in percentage points. '
              'Compare each mean with its paired SD and seed-level signs; neither monotonicity nor significance is assumed. '
+             'All budget differences for fairness components remain in the full aggregate CSV. '
              'Small budget effects motivate extending prespecified important settings to ten seeds for final analysis.\n',
              '## Female versus male false-positive rates\n', markdown(persistence.round(5)), '\n',
              'Positive mean means female FPR is higher. Counts show how many valid seeds have this ordering. '
@@ -305,11 +345,23 @@ def write_findings(config, root, seeds, stats, paired, budget_stats, persistence
               'Use these contrasts to distinguish sampling/normalization and clipping from additional noise, '
               'while retaining seed variability.\n', '## Effect of including sensitive predictors\n']
     feature_stats = pd.read_csv(root/'aggregate/feature_policy_differences_mean_std.csv')
-    feature_display = feature_stats.loc[feature_stats.metric.isin(['accuracy', 'SEX_separation', 'RAC1P_n500_separation'])].copy()
+    feature_display = feature_stats.loc[feature_stats.metric.isin(['accuracy', 'SEX_separation', 'RAC1P_n500_separation']) &
+                                      feature_stats.method.isin(['sgd', 'dp_epsilon_1'])].copy()
     feature_display[['mean', 'std']] *= 100
     extra += [markdown(feature_display[['method', 'metric', 'mean', 'std', 'valid_seeds']].round(5)), '\n',
               'Differences are include_sensitive minus exclude_sensitive, in percentage points. '
-              'Positive accuracy difference favors inclusion; positive gap difference indicates more disparity on that criterion.\n']
+              'Positive accuracy difference favors inclusion; positive gap difference indicates more disparity on that criterion. '
+              'All budgets and controls are retained in the full feature-policy CSV.\n',
+              '## Which sex group loses more accuracy? DP1 example\n']
+    group_losses = pd.read_csv(root/'aggregate/group_accuracy_losses_mean_std.csv', dtype={'group': str})
+    group_losses = group_losses.loc[group_losses.method.eq('dp_epsilon_1') & group_losses.attribute.eq('SEX')].copy()
+    group_losses['Group'] = group_losses.group.map({'1': 'Male', '2': 'Female'})
+    larger = {policy: block.loc[block['mean'].idxmax(), 'Group'] for policy, block in group_losses.groupby('feature_policy')}
+    ordering_text = '; '.join(f'{policy}: larger mean loss for {group}' for policy, group in larger.items())
+    extra += [markdown(group_losses[['feature_policy', 'Group', 'mean', 'std', 'valid_seeds']].round(5)), '\n',
+              'Values are accuracy losses in percentage points versus each group\'s matched SGD seed. '
+              f'Observed ordering: {ordering_text}. Full race/intersection losses '
+              'and per-run loss disparities are retained in the group-loss CSVs.\n']
     esr_stats = pd.read_csv(root/'aggregate/esr_mean_std.csv', dtype={'group': str})
     distribution = pd.read_csv(root/'audit/development_esr_distributions.csv', dtype={'group': str})
     within = pd.read_csv(root/'aggregate/within_esr_sex_fpr_difference_seed.csv')
@@ -343,4 +395,14 @@ def write_findings(config, root, seeds, stats, paired, budget_stats, persistence
                   'These tables distinguish within-category error rates from differences in the composition of the negative class. '
                   'They do not justify relabeling ESR2/4/5 without a separate target-definition decision.\n']
     text += extra
+    text += ['## Recommended figures after review (at most three)\n',
+             '1. Accuracy and sex/headline-race separation versus epsilon, with SGD and Poisson controls: '
+             'show the small budget differences alongside the much larger clipping-related utility change.\n'
+             '2. Paired accuracy losses by sex and supported race group under both feature policies: '
+             'show the observed change in which groups bear larger costs.\n'
+             '3. Sex-specific TPR/FPR across methods, with an ESR diagnostic inset if selected: '
+             'show error levels, feature-policy dependence, and label-composition effects.\n',
+             'These are recommendations only; no publication figures have been rendered. '
+             'Review the five-seed findings, prespecify ten-seed follow-up settings, and decide whether an '
+             'alternative target deserves a separate experiment before implementing interventions.\n']
     (root/'FINDINGS.md').write_text('\n'.join(text), encoding='utf-8')

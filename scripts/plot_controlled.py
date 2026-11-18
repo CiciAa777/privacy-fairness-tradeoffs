@@ -24,10 +24,13 @@ def render(root, figure, policy):
             private['epsilon'] = private.method.str.removeprefix('dp_epsilon_').astype(float)
             private = private.sort_values('epsilon')
             ax.errorbar(private.epsilon, 100*private['mean'], yerr=100*private['std'], marker='o', capsize=3)
-            baseline = subset.loc[subset.method.eq('sgd')]
-            if len(baseline):
-                ax.axhline(100*baseline['mean'].iloc[0], linestyle='--', color='gray', label='SGD')
+            for method, style, color in [('sgd', '--', 'gray'), ('poisson_unclipped', ':', '#668866'),
+                                         ('poisson_clipped', '-.', '#bb7744')]:
+                baseline = subset.loc[subset.method.eq(method)]
+                if len(baseline):
+                    ax.axhline(100*baseline['mean'].iloc[0], linestyle=style, color=color, label=method)
             ax.set(title=metric, xlabel='Epsilon', ylabel='Percent / percentage points')
+            ax.legend(fontsize=7)
     elif figure == 'group_loss':
         frame = pd.read_csv(root/'aggregate/group_accuracy_losses_mean_std.csv', dtype={'group': str})
         counts = pd.read_csv(root/'aggregate/group_seed_metrics.csv', dtype={'group': str})

@@ -1,0 +1,13 @@
+{
+  "completed_full_runs": 60,
+  "private_accountant_checks": 30,
+  "representative_checkpoint_prediction_checks": 12,
+  "checkpoints_missing": [],
+  "matched_initialization_groups": 10,
+  "group_counts_rates_and_esr_checked": true,
+  "seed285_v0_baseline_reproduced_exactly": true,
+  "archived_progress_report_unchanged": true,
+  "publication_figures_generated": false,
+  "test_outcomes_used": false,
+  "private_rng_state_exported": false
+}

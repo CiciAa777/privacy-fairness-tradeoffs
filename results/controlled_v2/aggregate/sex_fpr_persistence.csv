@@ -2,12 +2,12 @@ feature_policy,method,valid_seeds,female_higher_seeds,mean,std
 exclude_sensitive,dp_epsilon_1,5,5,11.173032142224798,0.34546550545613947
 exclude_sensitive,dp_epsilon_4,5,5,11.17661069795272,0.3005397645462668
 exclude_sensitive,dp_epsilon_8,5,5,11.219117683045909,0.3052124481490682
-exclude_sensitive,poisson_clipped,1,1,10.90764706362181,
-exclude_sensitive,poisson_unclipped,1,1,12.134288446562296,
+exclude_sensitive,poisson_clipped,5,5,11.055181636414321,0.2716974618062182
+exclude_sensitive,poisson_unclipped,5,5,12.069208442474165,0.40509826295601586
 exclude_sensitive,sgd,5,5,12.087346892947059,0.2140183142684155
 include_sensitive,dp_epsilon_1,5,3,1.2746731053159654,2.1354985735211827
 include_sensitive,dp_epsilon_4,5,4,1.4416291881169685,1.947076114780729
 include_sensitive,dp_epsilon_8,5,3,0.9604050898213657,2.0702930326808775
-include_sensitive,poisson_clipped,2,2,1.4141844774747252,1.0379713745986607
-include_sensitive,poisson_unclipped,2,2,2.6853322879484995,1.2519375061548121
+include_sensitive,poisson_clipped,5,4,1.2946061117586125,2.0387288782482513
+include_sensitive,poisson_unclipped,5,5,2.0361454281287523,0.9357604613601407
 include_sensitive,sgd,5,5,3.058623921047215,1.4913302685154586

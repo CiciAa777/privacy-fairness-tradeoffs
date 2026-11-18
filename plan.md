@@ -44,29 +44,33 @@ Initialization seeds: **[42, 123, 285, 2026, 2027]**.
 - [x] Match model initialization for comparisons within each feature policy/seed. DP sampling/noise use fresh private randomness.
 - [x] Log exact achieved epsilon/delta, noise/C, sample rate, updates, normalization, runtime, environment, feature/split fingerprints, and completion state.
 - [x] Save development overall/group statistics and local ignored predictions/checkpoints, with fixed final-epoch evaluation.
-- [ ] Commit/push completed aggregate run artifacts at useful checkpoints. Keep test outcomes reserved.
+- [x] Commit/push completed aggregate run artifacts at useful checkpoints (`73b90ff` contains all 40 main runs). Keep test outcomes reserved.
 
 ## Phase 4: sampling and clipping controls
 
-- [ ] Run 2 feature policies x 5 seeds x 2 controls = **20 additional non-private runs**.
-- [ ] Compare ordinary SGD versus Poisson-unclipped SGD, Poisson-unclipped versus clipped-noise-free SGD, and clipped-noise-free versus DP-SGD.
-- [ ] Distinguish sampling/normalization, clipping, and added noise; do not call the diagnostic controls DP.
+- [x] Run 2 feature policies x 5 seeds x 2 controls = **20 additional non-private runs**.
+- [x] Compare ordinary SGD versus Poisson-unclipped SGD, Poisson-unclipped versus clipped-noise-free SGD, and clipped-noise-free versus DP-SGD.
+- [x] Distinguish sampling/normalization, clipping, and added noise; do not call the diagnostic controls DP.
 
 ## Phase 5: aggregate and diagnose
 
-- [ ] Produce seed-level and aggregate CSV/JSON tables with mean and sample SD (`ddof=1`). Calculate every fairness gap per run before averaging.
-- [ ] Report all sex/race/intersection groups, undefined values, denominator support, and a separately labeled race headline comparison restricted to groups with n_development>=500.
-- [ ] Pair every DP run with its same-policy, same-initialization SGD baseline; report accuracy/group losses and fairness-component differences by seed.
-- [ ] Compare epsilon1/4/8 differences with training variability and compare sensitive-feature inclusion/exclusion.
-- [ ] Preserve original ESR1-6; report label-code distributions by sex/race, false-positive composition by ESR, and sex FPR within ESR categories.
-- [ ] Audit whether female FPR is consistently higher across seeds. Keep the primary ESR==1 target unchanged pending review.
-- [ ] Write a concise findings summary, exact reproduction/resume commands, completion counts, and limitations. No fabricated missing runs.
-- [ ] Prepare a reusable plotting pipeline/specification and recommend at most three main figures; do not render publication figures before review.
-- [ ] Commit/push the complete findings checkpoint.
+- [x] Produce seed-level and aggregate CSV/JSON tables with mean and sample SD (`ddof=1`). Calculate every fairness gap per run before averaging.
+- [x] Report all sex/race/intersection groups, undefined values, denominator support, and a separately labeled race headline comparison restricted to groups with n_development>=500.
+- [x] Pair every DP run with its same-policy, same-initialization SGD baseline; report accuracy/group losses and fairness-component differences by seed.
+- [x] Compare epsilon1/4/8 differences with training variability and compare sensitive-feature inclusion/exclusion.
+- [x] Preserve original ESR1-6; report label-code distributions by sex/race, false-positive composition by ESR, and sex FPR within ESR categories.
+- [x] Audit whether female FPR is consistently higher across seeds. Keep the primary ESR==1 target unchanged pending review.
+- [x] Write a findings summary, exact reproduction/resume commands, completion counts, and limitations. No fabricated missing runs.
+- [x] Prepare a reusable plotting pipeline/specification and recommend at most three main figures; do not render publication figures before review.
+- [x] Commit/push the complete findings checkpoint (final controlled-rerun commit).
+
+**Completed evidence:** [findings](results/controlled_v2/FINDINGS.md), [aggregate tables](results/controlled_v2/aggregate/README.md), and [artifact validation](results/controlled_v2/audit/validation.json). All 60 full runs completed; 12 unit tests and 12 public-reference smoke configurations passed. All 30 private accountant bounds and 12 representative checkpoint predictions were verified; the original seed285 exclusion baseline reproduced exactly. No test outcomes, interventions, target changes, final figures, or report edits were introduced.
 
 ## Review gate and remaining schedule
 
 Review the controlled results first. Expand important configurations to ten seeds for final analysis if the five-seed variability makes budget effects inconclusive; record the additional seeds before running them.
+
+Review priorities from the completed rerun: (1) the clipping-only controls reproduce most accuracy loss; (2) the sex group with larger accuracy loss changes with feature inclusion/exclusion; (3) race and sex separation can move in opposite directions; (4) epsilon8 is slightly less accurate than epsilon1 in all five inclusion-policy pairs, so retain that observation and investigate before final generalization; (5) ESR2/3/6 diagnostics and the small military cells require careful target interpretation. Keep the target/splits unchanged until a separate comparison is agreed.
 
 After review, schedule EO/LFR and ACSIncome work against the remaining time. They remain project objectives, but are not part of this baseline rerun. Preserve December 1-3 for final test evaluation only after choices are frozen, and December 4-7 for the final report. The existing progress report remains unchanged.
 

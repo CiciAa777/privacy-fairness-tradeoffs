@@ -1,0 +1,7 @@
+feature_policy,comparison,valid_seeds,later_budget_higher_seeds,later_budget_lower_seeds,tied_seeds,accuracy_change_pp,accuracy_change_sample_sd_pp
+exclude_sensitive,dp_epsilon_4 minus dp_epsilon_1,5,2,3,0,-0.0019825535289452745,0.11356742366322699
+exclude_sensitive,dp_epsilon_8 minus dp_epsilon_1,5,3,2,0,0.020486386465767836,0.07172595057475595
+exclude_sensitive,dp_epsilon_8 minus dp_epsilon_4,5,4,1,0,0.02246893999471311,0.06869356458611112
+include_sensitive,dp_epsilon_4 minus dp_epsilon_1,5,3,2,0,0.03238170763943948,0.0592651246491467
+include_sensitive,dp_epsilon_8 minus dp_epsilon_1,5,0,5,0,-0.06608511763150915,0.04225056784478052
+include_sensitive,dp_epsilon_8 minus dp_epsilon_4,5,0,5,0,-0.09846682527094863,0.08774650424768508

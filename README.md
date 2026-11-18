@@ -2,6 +2,8 @@
 
 The active experiment is the **controlled v2 baseline/DP-SGD rerun**. The original single-run pilots, reports, figures, notebooks, and settings are preserved in [V0/](V0/SETTINGS.txt).
 
+**Completed:** 40 main runs plus 20 non-private controls, five seeds per setting. Start with [the findings](results/controlled_v2/FINDINGS.md), [aggregate table conventions](results/controlled_v2/aggregate/README.md), or [validation results](results/controlled_v2/audit/validation.json). Interventions and publication figures remain deferred for review.
+
 Read [plan.md](plan.md) for the execution stages and changes, [proposal.md](proposal.md) for research definitions, and [the exact rerun request](V0/CONTROLLED_RERUN_REQUEST.txt) for requirements. The original progress-report source/PDF are in [V0/reports/progress_report/](V0/reports/progress_report/README.md); they remain unchanged.
 
 ## Controlled experiment

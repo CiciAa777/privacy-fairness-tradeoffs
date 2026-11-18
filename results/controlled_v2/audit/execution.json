@@ -1,0 +1,8 @@
+{
+  "main_jobs": 3,
+  "maximum_concurrent_training_jobs": 3,
+  "cpu_threads_per_job": 4,
+  "logical_cpus": 16,
+  "device": "CPU",
+  "note": "Independent configurations ran concurrently. Runtime is logged but is not a controlled machine-performance benchmark."
+}
