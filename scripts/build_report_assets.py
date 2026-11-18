@@ -1,7 +1,7 @@
 """Verify frozen controlled-v2 aggregates and build report assets without training.
 
 Run from the repository root with .venv/Scripts/python.exe scripts/build_report_assets.py.
-Only REPORT_FINDINGS.md and report_assets/ are written. Historical results stay frozen.
+Only numeric report tables and figures are generated. Root findings.md is maintained by the team.
 """
 from pathlib import Path
 import hashlib
@@ -38,15 +38,8 @@ def dump(path, value):
 def frozen_hashes():
     # Includes local checkpoints/predictions, but publishes only already-tracked aggregate hashes.
     paths = list(AGG.glob('*'))+list((RESULTS/'runs').rglob('*'))
-    paths += [RESULTS/'FINDINGS.md', RESULTS/'GROUP_COMPARISONS.md']
     return {str(p.relative_to(ROOT)).replace('\\', '/'): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in paths if p.is_file()}
-
-
-def md(frame):
-    return '\n'.join(['| '+' | '.join(frame.columns)+' |',
-                      '| '+' | '.join(['---']*len(frame.columns))+' |']+
-                     ['| '+' | '.join(map(str, row))+' |' for row in frame.itertuples(index=False, name=None)])
 
 
 def one(frame, **identity):
@@ -218,7 +211,6 @@ def tables(e):
             numeric.append(row); display.append(shown)
     export_table('table1_sgd_vs_dp1', numeric)
     t1 = pd.DataFrame(display)
-    (OUT/'tables/table1_sgd_vs_dp1.md').write_text(md(t1)+'\n', encoding='utf-8')
     latex_table('table1_sgd_vs_dp1', t1, 'Primary setting. Means $\\pm$ sample SD over five seeds. '
                 'Positive paired accuracy loss means harm. All fairness gaps are in percentage points; smaller means closer to parity. '
                 'Race gaps use the five groups with development $n\\geq500$.', 'tab:sgd-dp1')
@@ -235,7 +227,6 @@ def tables(e):
         numeric.append(row); display.append(shown)
     export_table('table2_privacy_budgets', numeric)
     t2 = pd.DataFrame(display)
-    (OUT/'tables/table2_privacy_budgets.md').write_text(md(t2)+'\n', encoding='utf-8')
     latex_table('table2_privacy_budgets', t2, 'Primary setting, fixed clipping norm $C=1$. Means $\\pm$ sample SD over five seeds. '
                 'Paired losses use each initialization-matched SGD baseline. Race separation uses development $n\\geq500$ groups.', 'tab:budgets')
     return t1, t2
@@ -369,238 +360,6 @@ def figures(e):
     export_table('figure3_fairness_gaps', rows)
 
 
-def report(e, t1, t2):
-    s = lambda method, metric: e.stat(method, metric)
-    def mean(method, metric): return 100*s(method, metric)['mean']
-    def gm(group, metric, attribute='RAC1P', method='dp_epsilon_1'): return 100*e.g(method, attribute, group, metric)['mean']
-    def delta(group, metric, attribute='RAC1P'): return 100*e.change(attribute, group, metric)['mean']
-    loss = one(e.paired, feature_policy=PRIMARY, method='dp_epsilon_1', metric='accuracy_loss_pp')
-    group_rows = e.raw_delta.loc[e.raw_delta.feature_policy.eq(PRIMARY) & e.raw_delta.method.eq('dp_epsilon_1') &
-                               e.raw_delta.attribute.eq('RAC1P') & e.raw_delta.group.isin(RACES)]
-    rising_tpr = int(group_rows.tpr.gt(0).sum())
-    assert group_rows.fpr.gt(0).all() and group_rows.selection_rate.gt(0).all()
-    assert rising_tpr == 24 and set(group_rows.loc[group_rows.tpr.lt(0), 'group']) == {'2'}
-    assert group_rows.groupby('group')[['tpr', 'fpr', 'selection_rate']].mean().gt(0).all().all()
-    # Check the stated groups and components behind each primary DP1 headline gap.
-    driver_rows = e.raw_group.loc[e.raw_group.feature_policy.eq(PRIMARY) &
-                                 e.raw_group.method.eq('dp_epsilon_1') & e.raw_group.attribute.eq('RAC1P') &
-                                 e.raw_group.group.isin(RACES)]
-    race_ppv_dominant = 0
-    for _, block in driver_rows.groupby('model_seed'):
-        for metric in ['fpr', 'selection_rate']:
-            assert block.loc[block[metric].idxmax(), 'group']=='8' and block.loc[block[metric].idxmin(), 'group']=='2'
-        for metric in ['accuracy', 'ppv']:
-            assert block.loc[block[metric].idxmax(), 'group']=='2' and block.loc[block[metric].idxmin(), 'group']=='8'
-        assert block.fpr.max()-block.fpr.min() >= block.tpr.max()-block.tpr.min()
-        race_ppv_dominant += int(block.ppv.max()-block.ppv.min() >= block.npv.max()-block.npv.min())
-    sex_driver_rows = e.raw_group.loc[e.raw_group.feature_policy.eq(PRIMARY) &
-                                     e.raw_group.method.eq('dp_epsilon_1') & e.raw_group.attribute.eq('SEX')]
-    sex_tpr_dominant = sum(int(b.tpr.max()-b.tpr.min() >= b.fpr.max()-b.fpr.min())
-                           for _, b in sex_driver_rows.groupby('model_seed'))
-    b8 = one(e.budget, feature_policy=PRIMARY, comparison='dp_epsilon_8 minus dp_epsilon_1', metric='accuracy')
-    r8 = one(e.budget, feature_policy=PRIMARY, comparison='dp_epsilon_8 minus dp_epsilon_1', metric='RAC1P_n500_separation')
-    primary = e.stats.loc[e.stats.feature_policy.eq(PRIMARY) & e.stats.method.isin(DP)]
-    fairness = primary.loc[primary.metric.isin([scope+'_'+metric for scope in ['SEX', 'RAC1P_n500'] for metric, _ in GAPS])]
-    maximum_span = 100*fairness.groupby('metric')['mean'].agg(lambda x: x.max()-x.min()).max()
-    accuracy_span = 100*primary.loc[primary.metric.eq('accuracy'), 'mean'].agg(lambda x: x.max()-x.min())
-    def txt(method, metric): return fmt(s(method, metric))
-    clipping = mean('poisson_clipped', 'accuracy')-mean('poisson_unclipped', 'accuracy')
-    added = mean('dp_epsilon_1', 'accuracy')-mean('poisson_clipped', 'accuracy')
-    contrasts = []
-    for earlier, later in zip(METHODS[:3], METHODS[1:4]):
-        a, b = [e.seeds.loc[e.seeds.feature_policy.eq(PRIMARY) & e.seeds.method.eq(m)].set_index('model_seed').accuracy for m in [earlier, later]]
-        values = 100*(b-a)
-        contrasts.append(dict(comparison=later+' minus '+earlier, mean_pp=values.mean(), sd_pp=values.std(ddof=1)))
-    export_table('training_contrasts', contrasts)
-    parts = [
-        '# Report findings: DP-SGD changes group outcomes unevenly\n',
-        '## Experimental setup\n',
-        'California 2018 ACS Employment, ages 17-89, PWGTP>=1, target Y=(ESR==1), original splits and '
-        'reference-fitted preprocessing. Primary inputs include SEX/RAC1P (87 encoded features). '
-        'The ReLU MLP (64/32 hidden units) uses 20 epochs, SGD lr=0.05, momentum=0, batch size 512 '
-        'and threshold 0.5. Five initialization seeds are matched within each policy across six training methods. '
-        'DP uses C=1, RDP accounting and delta=1/(10*151320)=6.61e-7. '
-        f'Recorded per-run epsilon bounds are {", ".join(f"{e.seeds.loc[e.seeds.method.eq(m), 'epsilon'].iloc[0]:.4f}" for m in DP)}. '
-        'Evaluation uses 30,264 development people; no models were retrained and test outcomes remain reserved.\n',
-        '**Units and uncertainty.** Accuracy and group rates are percentages (%); rate differences, losses and gaps '
-        'are percentage points (pp). All +/- values are sample SD across five seeds (ddof=1). '
-        'Differences are paired within policy/group/initialization; fairness gaps are calculated per seed before averaging.\n',
-        '## Six main findings\n',
-        '**1. DP shifts predictions toward the positive class unevenly across races.** '
-        'All five supported race groups have higher mean selection rate, TPR and FPR at eps1 than under SGD. '
-        f'Selection and FPR increase in all 25 group-seed pairs; TPR increases in {rising_tpr}/25. '
-        f'Some Other Race-alone has the largest supported-group changes: selection +{delta("8", "selection_rate"):.2f} pp, '
-        f'TPR +{delta("8", "tpr"):.2f} pp and FPR +{delta("8", "fpr"):.2f} pp. '
-        f'Its accuracy falls {gm("8", "accuracy", method="sgd"):.2f}% -> {gm("8", "accuracy"):.2f}% '
-        f'(paired loss {-delta("8", "accuracy"):.2f} pp). '
-        f'Black-alone FPR increases {delta("2", "fpr"):.2f} pp, and White-alone FPR increases {delta("1", "fpr"):.2f} pp. '
-        'These are thresholded-prediction observations, not an explanation of score shifts (Figure 1).\n',
-        '**2. The clipping-only control closely matches DP accuracy.** '
-        f'Ordinary SGD, Poisson-unclipped, Poisson-clipped and DP1 accuracies are respectively '
-        f'{txt("sgd", "accuracy")}%, {txt("poisson_unclipped", "accuracy")}%, '
-        f'{txt("poisson_clipped", "accuracy")}% and {txt("dp_epsilon_1", "accuracy")}%. '
-        f'The clipped-minus-unclipped contrast is {clipping:+.3f} pp '
-        f'(paired SD {contrasts[1]["sd_pp"]:.3f} pp), while DP1 minus clipped is {added:+.3f} pp '
-        f'(paired SD {contrasts[2]["sd_pp"]:.3f} pp). '
-        'Thus the large accuracy reduction is already present in the clipping-only control under these settings. '
-        'The non-private Poisson controls share sample streams, but DP draws fresh minibatches/noise. '
-        'The contrast is not proof of a gradient-level mechanism or that noise has no effect. '
-        'Ordinary SGD also differs in sampling/normalization (Figure 2a).\n',
-        '**3. Budget sensitivity is small in magnitude at fixed C=1, but not absent.** '
-        f'Across eps1/4/8, mean accuracy spans {accuracy_span:.3f} pp, and the largest span among the eight '
-        f'sex/supported-race fairness-gap means is {maximum_span:.3f} pp (race separation). '
-        f'Eps8 minus eps1 accuracy is {fmt(b8, precision=3, signed=True)} pp and is negative in 5/5 seeds. '
-        f'Race separation changes {fmt(r8, precision=3, signed=True)} pp and decreases in 5/5 seeds. '
-        'These repeatable directions should be retained even though the effects are small relative to the SGD-to-DP '
-        'differences. Most other contrasts are comparable to training variation; this does not establish '
-        'equivalence or that epsilon never matters (Table 2, Figure 2b).\n',
-        '**4. Absolute accuracy losses are disparate, independently of accuracy-parity gaps.** '
-        f'The overall paired DP1 loss is {fmt(loss, scale=1, precision=3)} pp. '
-        f'Male and female losses are {-delta("1", "accuracy", "SEX"):.2f} and {-delta("2", "accuracy", "SEX"):.2f} pp. '
-        f'The five supported race-group losses are White-alone {-delta("1", "accuracy"):.2f}, '
-        f'Black-alone {-delta("2", "accuracy"):.2f}, Asian-alone {-delta("6", "accuracy"):.2f}, '
-        f'Some Other Race-alone {-delta("8", "accuracy"):.2f}, and Two or More Races {-delta("9", "accuracy"):.2f} pp. '
-        'Loss is relative to each group\'s own non-private baseline. The smallest supported group does not '
-        'have the largest loss (Figure 1a).\n',
-        '**5. Fairness changes depend on the attribute and criterion.** '
-        f'Sex separation decreases {mean("sgd", "SEX_separation"):.2f} -> {mean("dp_epsilon_1", "SEX_separation"):.2f} pp, '
-        f'whereas supported-race separation increases {mean("sgd", "RAC1P_n500_separation"):.2f} -> '
-        f'{mean("dp_epsilon_1", "RAC1P_n500_separation"):.2f} pp (both directions in 5/5 seeds). '
-        'The primary sex means improve on all four gap criteria. Race accuracy, independence and separation gaps '
-        'increase, while binary sufficiency decreases (Table 1).\n',
-        '**6. Closer parity can accompany worse outcomes for both sexes.** '
-        f'Male TPR rises {gm("1", "tpr", "SEX", "sgd"):.2f}% -> {gm("1", "tpr", "SEX"):.2f}% '
-        f'and female TPR rises {gm("2", "tpr", "SEX", "sgd"):.2f}% -> {gm("2", "tpr", "SEX"):.2f}%. '
-        f'The female TPR increase is larger, narrowing the mean TPR difference; '
-        f'TPR drives separation in {sex_tpr_dominant}/5 DP1 seeds (FPR in the remaining seed). '
-        f'At the same time, male FPR rises {gm("1", "fpr", "SEX", "sgd"):.2f}% -> {gm("1", "fpr", "SEX"):.2f}% '
-        f'and female FPR rises {gm("2", "fpr", "SEX", "sgd"):.2f}% -> {gm("2", "fpr", "SEX"):.2f}%. '
-        'Both lose accuracy. Smaller between-group gaps therefore cannot be described as uniformly better outcomes.\n',
-        '## Two concise report tables\n',
-        '### Table 1. Primary SGD versus DP1\n', md(t1), '\n',
-        'Accuracy loss is SGD minus DP1, paired by initialization. The SGD loss entry is a reference zero, '
-        'not another estimate. '
-        'Fairness definitions: accuracy parity=range of group accuracies; independence=range of selection rates; '
-        'separation=max(TPR range,FPR range); binary sufficiency=max(PPV range,NPV range). '
-        'Smaller gaps mean closer parity. Binary sufficiency uses thresholded predictions and does not establish score calibration.\n',
-        '### Table 2. Primary privacy-budget comparison, C=1\n', md(t2), '\n',
-        'Smaller epsilon gives a stronger per-run privacy bound at the same delta, without guaranteeing higher '
-        'or lower accuracy. No statistical-significance claim is made.\n',
-        '## What drives the race gaps?\n',
-        f'At DP1, Black-alone has the lowest supported-group FPR ({gm("2", "fpr"):.2f}%) and '
-        f'Some Other Race-alone the highest ({gm("8", "fpr"):.2f}%) in every seed. '
-        'Their FPR range drives race separation. '
-        f'The same two groups have selection rates {gm("2", "selection_rate"):.2f}% versus '
-        f'{gm("8", "selection_rate"):.2f}% and accuracies {gm("2", "accuracy"):.2f}% versus '
-        f'{gm("8", "accuracy"):.2f}%, driving DP1 independence and accuracy gaps. '
-        f'Their PPVs are {gm("2", "ppv"):.2f}% versus {gm("8", "ppv"):.2f}%. '
-        f'PPV drives race sufficiency in {race_ppv_dominant}/5 seeds; NPV drives the remaining seed. '
-        'The listed rate-extreme pairs hold across all five DP1 seeds; SGD extremes sometimes differ. '
-        'Both groups\' PPVs fall despite closer sufficiency. For sex, PPV drives sufficiency, '
-        'and the selection gap shrinks because female selection increases more.\n',
-        '## Secondary sensitivity: exclude sex and race predictors\n',
-        'Exclusion retains all protected labels for evaluation. At DP1, male/female paired accuracy losses become '
-        f'{-100*e.change("SEX", "1", "accuracy", "exclude_sensitive")["mean"]:.2f}/'
-        f'{-100*e.change("SEX", "2", "accuracy", "exclude_sensitive")["mean"]:.2f} pp, '
-        'reversing the primary male/female ordering (2.26/1.57 pp). '
-        'Sex accuracy parity and independence worsen slightly under exclusion, while separation and sufficiency improve. '
-        f'Race separation still worsens ({100*e.stat("sgd", "RAC1P_n500_separation", "exclude_sensitive")["mean"]:.2f} -> '
-        f'{100*e.stat("dp_epsilon_1", "RAC1P_n500_separation", "exclude_sensitive")["mean"]:.2f} pp); '
-        'Two or More Races has the largest supported-group '
-        f'loss ({-100*e.change("RAC1P", "9", "accuracy", "exclude_sensitive")["mean"]:.2f} pp). '
-        'See [full group tables](GROUP_COMPARISONS.md).\n',
-        '## Selected figures and two-page report recommendation\n',
-        'Include **Figures 1 and 2**, **Table 1** (four fairness criteria), and **Table 2** (budget sensitivity). '
-        'Figure 3 is optional supplementary material; it repeats Table 1. Main figures are 6.5 inches wide, '
-        'under 3.1 inches high, in vector PDF/SVG and 350-dpi PNG. '
-        '[Captions](report_assets/captions.md) explain each panel and uncertainty.\n',
-        '![Figure1: group impact](report_assets/figures/figure1_racial_impact.png)\n',
-        '![Figure2: ablations and budget differences](report_assets/figures/figure2_accuracy_ablations.png)\n',
-        '## Limits and remaining experiments\n',
-        'Five seeds, one state/year, one development split, architecture, clipping norm C=1 and training budget '
-        'limit generalization. Seed SD is not a confidence interval or population uncertainty. '
-        'Headline race gaps use only White-alone, Black-alone, Asian-alone, Some Other Race-alone and Two or More Races '
-        '(n>=500). No race labels are merged; four smaller categories and all intersections remain in the full tables, '
-        'where tiny denominators can make rates undefined. The ESR==1 target and household overlap across person '
-        'splits also limit interpretation. No EO/LFR results exist yet. Non-private outputs mean the repository '
-        'is not an end-to-end DP release.\n',
-        '**Proposed clipping experiment (not executed):** C in {0.5,1,2,5} '
-        'at fixed eps1, retaining the cohort, splits, architecture, optimizer, training budget, sampling, '
-        'evaluation and five initialization seeds. Calibrate and verify '
-        'the RDP multiplier sigma for the fixed epsilon/delta, sampling and step count. Gaussian SD on '
-        'the clipped sum must be sigma*C before expected-batch normalization. The same calibrated sigma '
-        'normally preserves epsilon across C, while absolute noise changes. Evaluate accuracy, group loss, '
-        'selection, TPR/FPR and all gaps. Retain fresh private randomness and compose new releases.\n',
-        '**Proposed score/ROC diagnostic (not executed):** compare '
-        'SGD, clipped-noise-free and DP scores by actual label and protected group; show label-conditional '
-        'histograms/ECDFs, ROC/AUC and operating points at 0.5 using saved development predictions. '
-        'A threshold sweep can distinguish score shifts from discrimination changes. Measure label/group '
-        'clipping frequencies only on permitted public-reference data or through separately budgeted DP '
-        'training summaries. Public-reference frequencies may differ from training; do not release raw private '
-        'gradient norms or unaccounted counts.\n',
-        'Then extend prespecified settings to ten seeds, add ACSIncome, and implement EO/LFR as the subsequent '
-        'stage with explicit data/privacy assumptions. Freeze choices before final test evaluation.\n',
-        '## Findings that qualify the proposed interpretation\n',
-        '- The statement that every supported group\'s TPR increases is true for the five-seed means, '
-        f'but only {rising_tpr}/25 group-seed pairs increase (one Black-alone seed decreases).\n'
-        '- Reduced sex separation does not mean both groups have better accuracy or lower false-positive rates.\n'
-        '- The race sufficiency gap improves while the other three supported-race gaps worsen.\n'
-        '- The smallest supported race group does not have the largest accuracy loss.\n'
-        '- Eps8 is slightly less accurate than eps1 in all five primary pairs, so larger epsilon does not '
-        'produce monotonic accuracy here; budget effects are small, not absent.\n'
-        '- The clipping control supports a clipping-associated reduction at C=1; it does not prove that '
-        'Gaussian noise is irrelevant or identify a gradient mechanism.\n',
-        '## Verification and reproduction\n',
-        'The builder checks confusion counts/rates, per-seed gaps, paired differences and means/SDs. '
-        'Source hashes and numeric figure/table values are in '
-        '[report_assets/](report_assets/README.md). Reproduce with '
-        '` .\\.venv\\Scripts\\python.exe scripts\\build_report_assets.py `. '
-        'It verifies source bytes are unchanged and does not call training or aggregation pipelines.\n',
-    ]
-    assert e.change('SEX', '1', 'accuracy')['mean'] < e.change('SEX', '2', 'accuracy')['mean']
-    assert e.change('SEX', '1', 'accuracy', 'exclude_sensitive')['mean'] > e.change('SEX', '2', 'accuracy', 'exclude_sensitive')['mean']
-    assert min(RACES, key=lambda g: e.change('RAC1P', g, 'accuracy', 'exclude_sensitive')['mean'])=='9'
-    (RESULTS/'REPORT_FINDINGS.md').write_text('\n'.join(parts), encoding='utf-8')
-
-
-def supporting_docs():
-    captions = '''# Figure captions
-
-## Figure1. Unequal racial impact at epsilon1 (main report)
-
-Paired changes from non-private SGD to DP-SGD at epsilon1 for the five race groups with development n>=500, primary include-sensitive setting. Panels show (a) accuracy loss (SGD minus DP), (b) FPR increase (DP minus SGD), and (c) selection-rate increase (DP minus SGD), all in percentage points. Points and whiskers are means and sample SDs across five initialization-matched runs. Positive values mean lower accuracy or more false/positive predictions under DP. Group labels show fixed development sample sizes. Sample SD represents training variation, not a confidence interval. The smaller race groups are excluded only from this headline display and remain in the full tables. Panels use different horizontal scales, clearly labeled; compare groups within each panel.
-
-## Figure2. Accuracy across sampling, clipping, and DP ablations (main report)
-
-(a) Overall development accuracy for ordinary SGD, Poisson SGD without clipping/noise, Poisson SGD clipped at C=1 without noise, and DP-SGD at epsilon1/4/8. The marked reduction compares the two non-private Poisson controls. (b) Initialization-paired accuracy changes for DP4 minus DP1 and DP8 minus DP1, exposing small budget differences on an explicitly labeled difference scale. Large markers/whiskers show mean +/- sample SD over five seeds; small dots show individual seeds. Panel (a) uses a truncated accuracy axis, not bars; panel (b) uses percentage-point changes, with zero marked. The controls share minibatch streams, while DP uses independently randomized minibatches/noise. Contrasts describe these settings and do not isolate a universal gradient mechanism or establish that noise is irrelevant.
-
-## Figure3. Fairness depends on demographic attribute and criterion (optional supplement)
-
-Four disparity criteria for non-private SGD versus DP1 under the primary include-sensitive configuration, comparing (a) sex groups and (b) the five supported race groups. Accuracy parity and independence are the ranges of group accuracy and selection rates. Separation is the maximum of TPR and FPR ranges. Binary sufficiency is the maximum of PPV and NPV ranges and concerns thresholded predictions. Gaps are computed per run before averaging; whiskers show sample SD across five seeds. Smaller gaps mean closer parity, not necessarily better outcomes within each group. Separation moves in opposite directions across the two demographic attributes. This figure repeats Table1 and is recommended as optional material.
-'''
-    (OUT/'captions.md').write_text(captions, encoding='utf-8')
-    (OUT/'README.md').write_text('''# Controlled-v2 report assets
-
-Start with [REPORT_FINDINGS.md](../REPORT_FINDINGS.md).
-
-For the two-page report, use Figure 1 (`figures/figure1_racial_impact.pdf`), Figure 2 (`figures/figure2_accuracy_ablations.pdf`), Table 1 (`tables/table1_sgd_vs_dp1.tex`) and Table 2 (`tables/table2_privacy_budgets.tex`). Figure 3 is optional supplementary material; it repeats Table 1. The two full-width figures total about 5.8 inches in height. The original progress report has not been edited.
-
-- Figures are vector PDF/SVG and 350-dpi PNG, 6.5 inches wide, with sample SD error bars over five seeds. Small budget contrasts use a clearly labeled paired-difference panel.
-- [Captions](captions.md) state populations, directions, units, uncertainty and ablation limitations.
-- The two summary tables are available as Markdown, numeric CSV and Overleaf-ready LaTeX (requires `booktabs`). Numeric CSV means/SDs are percentages or pp as explicitly labeled, unlike raw aggregate fractions. LaTeX tables have no external-file dependency.
-- Other files in `tables/` are machine-readable values behind figures and training contrasts, not extra summary tables to include.
-- `source_provenance.json` records hashes of the existing aggregate CSVs and findings used. `validation.json` records independent numerical checks and source preservation. `visual_review.json` records the inspected asset hashes and PDF/LaTeX checks. Historical audit/plot-plan files remain unchanged snapshots of their pre-figure stage.
-
-Rebuild from the repository root:
-
-```powershell
-.\\.venv\\Scripts\\python.exe scripts\\build_report_assets.py
-```
-
-The builder reads only existing result files. It never loads training/test matrices or invokes model training, score diagnostics, new clipping experiments, or fairness interventions. Original results, checkpoints, predictions and aggregates are byte-checked before and after generation. Source artifacts with changed protocols should be reviewed before regenerating a new report.
-''', encoding='utf-8')
-
-
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for folder in ['figures', 'tables']:
@@ -608,10 +367,8 @@ def main():
     before = frozen_hashes()
     checks = verify_sources()
     evidence = Evidence()
-    t1, t2 = tables(evidence)
+    tables(evidence)
     figures(evidence)
-    report(evidence, t1, t2)
-    supporting_docs()
     after = frozen_hashes()
     assert before == after, 'Frozen source changed during generation'
     publish = {name: sha for name, sha in before.items() if '/runs/' not in name}

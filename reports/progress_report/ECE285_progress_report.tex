@@ -10,17 +10,30 @@
 \usepackage{titlesec}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[hidelinks]{hyperref}
+\usepackage{booktabs}
+\usepackage{tabularx}
 \hypersetup{pdftitle={Privacy-Fairness Trade-offs in DP-SGD: ECE 285 Progress Report},pdfauthor={Cici Xu and Shannon Saad}}
+
 \linespread{1}
+\raggedbottom
+
 \setlength{\parindent}{0pt}
-\setlength{\parskip}{3pt}
+\setlength{\parskip}{2pt}
+
 \setlength{\intextsep}{5pt}
-\titleformat{\section}{\normalfont\normalsize\bfseries}{\thesection}{0.5em}{}
-\titlespacing*{\section}{0pt}{6pt}{2pt}
+\setlength{\textfloatsep}{6pt}
+\setlength{\floatsep}{6pt}
+
+\titleformat{\section}
+  {\normalfont\normalsize\bfseries}
+  {\thesection}{0.5em}{}
+\titlespacing*{\section}{0pt}{5pt}{2pt}
+
 \newcommand{\eps}{\varepsilon}
 \begin{document}
+\vspace*{-0.4in}
 \begin{center}
-\hrule height 1pt\vspace{4pt}
+\hrule height 1pt
 {\large\bfseries Privacy--Fairness Trade-offs in DP-SGD}\par
 \vspace{3pt}
 Cici Xu \qquad Shannon Saad\par
@@ -36,75 +49,153 @@ how privacy budgets affect accuracy/fairness, and whether Learning Fair Represen
 (LFR)~\cite{zemel2013} and equalized-odds (EO) post-processing~\cite{hardt2016} mitigate disparities.
 
 \section{Progress Since Proposal}
-The instructor's feedback was positive and encouraged \textbf{additional Folktables tasks}.
-ACSIncome is planned; only employment experiments are complete.
-Independent refinements add sex/race predictors (primary), exclusion (sensitivity), five-seed comparisons,
-and sampling/clipping controls. Data preparation and baseline/DP experiments are complete; LFR/EO are planned.
+We have completed preprocessing and SGD/DP-SGD experiments on ACS Employment, and we plan to extend our study to ACS Income. We evaluated both configurations, including and excluding sex and race as features. Experiments are conducted with 5 seeds. LFR and equalized-odds interventions are planned for next stage.
 
 \section{Experimental Setup and Completed Work}
-\begin{itemize}[leftmargin=*,nosep,topsep=1pt]
-\item \textbf{Data:} California ACS 2018, ages 17--89; $Y=1$ iff ESR=1 (civilian employed, at work).
-Train/dev: 151,320/30,264; fixed splits; reference-fitted preprocessing.
-\item \textbf{Model:} ReLU MLP, hidden widths 64/32; SGD lr 0.05; 20 epochs; batch 512; threshold 0.5.
-\item \textbf{Comparisons:} SGD; DP-SGD $\eps\in\{1,4,8\}$, $C=1$, $\delta=6.61\!\times\!10^{-7}$;
-unclipped/clipped non-private Poisson controls; five seeds; both feature policies.
-\item \textbf{Completed:} 40 main + 20 control runs; development evaluation only; final test untouched.
-\end{itemize}
+
+\noindent
+\begin{tabularx}{\linewidth}{@{}p{0.20\linewidth}X@{}}
+\toprule
+\textbf{Component} & \textbf{Configuration} \\
+\midrule
+
+Dataset &
+2018 California ACS Employment (ages 17--89); $Y=1$ iff ESR=1. \\
+
+Data splits &
+Reference: 30,264, train: 151,320,
+validation: 30,264, calibration: 30,264,
+test: 60,528; Fixed across experiments. \\
+
+Model &
+MLP (64, 32), ReLU; SGD, lr $=0.05$;
+20 epochs, batch size 512. \\
+
+Privacy &
+DP-SGD, $\varepsilon\in\{1,4,8\}$,
+$C=1$, $\delta=6.61\times10^{-7}$. \\
+
+Comparisons &
+SGD, DP-SGD, unclipped/clipped
+Poisson-SGD controls; five seeds. \\
+
+Completed &
+40 main and 20 control runs.\\
+
+\bottomrule
+\end{tabularx}
+
+
 
 \section{Preliminary Results and Discussion}
-Primary setting below: differences in percentage points (pp), paired by initialization;
-gaps computed per seed, then averaged. $\pm$ denotes five-seed sample SD, not population uncertainty.
 
-\textbf{Unequal group costs.}
-At $\eps=1$, overall accuracy falls $1.91\pm0.71$ pp.
-Some Other Race-alone has the largest supported-group loss ($4.01\pm0.74$ pp) and
-FPR increase ($21.52\pm6.73$ pp; Figure~\ref{fig:impact}), versus 6.77 pp higher FPR for Black-alone.
-Mean positive-prediction rates, TPR and FPR rise for all five races; TPR rises in 24/25 group--seed pairs.
+We first examine group-level accuracy and prediction
+patterns, then assess their fairness implications and
+investigate the training components responsible.
+Results below use the primary setting with sex and race
+included as predictors. Reported differences are in
+percentage points (pp), averaged over five seeds.
+
+\noindent\textbf{1. Unequal accuracy losses and
+positive-prediction shifts.}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\linewidth]{figures/racial_impact.pdf}
-\caption{Paired DP1 changes, mean $\pm$ seed SD. Parentheses: development counts.
-Headline races have $n\geq500$; smaller groups remain in detailed audits.}
+\includegraphics[
+    width=\linewidth,
+    height=0.20\textheight,
+    keepaspectratio
+]{figures/racial_impact.pdf}
+\caption{Paired accuracy losses and FPR increases
+under DP-SGD ($\eps=1$), mean $\pm$ seed SD.
+Groups shown have development $n\geq500$.}
 \label{fig:impact}
 \end{figure}
+DP-SGD ($\eps=1$) reduces overall accuracy by
+$1.91\pm0.71$ pp, with unequal losses across groups.
+Examining the predictions reveals
+a consistent pattern: DP-SGD predicts the positive
+class more frequently across both sexes and all five
+racial groups, increasing both true-positive rates
+(TPR) and false-positive rates (FPR).
+The FPR increases outweigh the TPR gains in
+overall accuracy, but to different degrees across
+groups. As Figure~\ref{fig:impact} shows, Some Other
+Race-alone has a particularly large FPR increase
+($21.52$ pp), compared with $6.77$ pp for Black-alone.
 
-\newpage
-\textbf{Fairness depends on the attribute and criterion.}
-Sex separation falls $7.75\to5.03$ pp, while supported-race separation rises $16.72\to31.24$ pp
-(both directions in 5/5 seeds). Black-alone versus Some Other Race-alone FPR (26.61\% vs 57.86\%)
-drives DP1 race separation. Both sexes have higher FPR and lower accuracy despite closer sex parity.
+
+\noindent\textbf{2. Different effects on fairness.}
+These unequal prediction changes lead to contrasting
+fairness outcomes. Table~\ref{tab:fairness} compares
+SGD and DP-SGD across accuracy parity, independence,
+separation, and binary sufficiency. While sex
+separation decreases from $7.75$ to $5.03$ pp,
+race separation increases from $16.72$ to $31.24$
+pp. Other fairness measures show mixed effects. Feature selection also matters; excluding sex and race reverses which sex experiences the larger accuracy loss.
 
 \begin{table}[H]
 \centering
 \input{tables/sgd_dp1.tex}
-\caption{Primary SGD versus DP1, mean $\pm$ seed SD. Smaller gaps indicate closer parity.}
+\caption{SGD versus DP-SGD ($\eps=1$), mean
+$\pm$ seed SD. Smaller gaps indicate closer
+parity; race gaps cover five supported groups.}
 \label{tab:fairness}
 \end{table}
-Gaps are accuracy/selection-rate ranges (accuracy parity/independence), the larger TPR/FPR range
-(separation), and the larger PPV/NPV range (binary sufficiency, not score calibration).
-Race sufficiency improves while the other race gaps worsen (Table~\ref{tab:fairness}).
 
-\textbf{Clipping-associated loss.}
-Accuracy is $77.42\pm0.55$\% for SGD, $77.57\pm0.41$\% for unclipped Poisson SGD,
-$75.51\pm0.35$\% for clipped Poisson SGD, and $75.52\pm0.34$\% for DP1.
-Clipped minus unclipped is $-2.06\pm0.48$ pp; DP1 minus clipped is $+0.005\pm0.051$ pp.
-The reduction appears without noise, but DP uses fresh minibatches: this does not prove a sole cause
-or that noise is irrelevant.
+\noindent\textbf{3. Clipping and privacy-budget effects.}
+We compare ordinary SGD, Poisson-SGD, clipped Poisson-SGD, and DP-SGD
+at different privacy budgets (Table~\ref{tab:methods}).
+Poisson sampling alone has little effect on accuracy,
+whereas introducing gradient clipping reduces it
+by $2.06$ pp and substantially increases race
+separation. In contrast, adding calibrated Gaussian
+noise produces little further mean change. Moreover,
+at fixed clipping norm $C=1$, DP-SGD performance
+remains similar across $\eps\in\{1,4,8\}$.
+These findings suggest that clipping is a major
+contributor to the observed accuracy--fairness
+trade-off under our current settings, motivating
+clipping-norm sensitivity experiments.
 
-\textbf{Budget sensitivity and limitations.}
-DP accuracy at $\eps=1,4,8$ is $75.517\pm0.343$, $75.550\pm0.334$, and $75.451\pm0.351$\%.
-The mean span is 0.098 pp; $\eps=8$ is less accurate in all five $\eps=8$--$1$ pairs
-($-0.066\pm0.042$ pp). Small effects here do not establish universal insensitivity or monotonicity.
-Removing sensitive predictors reverses which sex loses more accuracy. One task/state/year, five seeds,
-fixed $C=1$, and development-only evaluation limit generalization; tiny-group rates may be undefined.
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Method} &
+\textbf{Acc. (\%)} &
+\textbf{Sex sep.} &
+\textbf{Race sep.} \\
+\midrule
+SGD
+& $77.42\pm0.55$ & 7.75 & 16.72 \\
+Poisson-SGD
+& $77.57\pm0.42$ & 8.00 & 18.04 \\
+Poisson-SGD + clip
+& $75.51\pm0.35$ & 4.88 & 30.80 \\
+DP-SGD ($\eps=1$)
+& $75.52\pm0.34$ & 5.03 & 31.24 \\
+DP-SGD ($\eps=4$)
+& $75.55\pm0.33$ & 5.04 & 30.79 \\
+DP-SGD ($\eps=8$)
+& $75.45\pm0.35$ & 5.02 & 30.96 \\
+\bottomrule
+\end{tabular}
+\caption{Performance across training methods,
+five-seed means (accuracy $\pm$ sample SD).
+Separation gaps are in pp; race gaps cover
+five supported groups.}
+\label{tab:methods}
+\end{table}
 
 \section{Remaining Work and Timeline}
 \textbf{Nov.\ 19--24:} robustness checks, selected ten-seed runs, ACSIncome, and
 $C\in\{0.5,1,2,5\}$ sensitivity if feasible (scaled noise/accounting).
 \textbf{Nov.\ 24--30:} implement/evaluate LFR and EO with separate calibration and privacy assumptions.
 \textbf{Dec.\ 1--4:} freeze choices, evaluate selected models on held-out test data, finalize trade-off figures.
-\textbf{Dec.\ 5--7:} finalize report, presentation and reproducibility; deadline December 7, 2026.
+\textbf{Dec.\ 5--7:} finalize report
 
 \section{Changes from Original Proposal}
 Primary inputs now include sex/race, with exclusion retained. Poisson/clipping ablations are new;

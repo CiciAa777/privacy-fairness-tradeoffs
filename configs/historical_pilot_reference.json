@@ -1,0 +1,12 @@
+{
+  "source_commit": "21d50cf",
+  "original_pilot_commit": "12e6822216328d66b3da7699048bcae3cdf6fcb5",
+  "source_paths": [
+    "V0/results/dp_pilot/composition.json",
+    "V0/results/baseline/summary.json"
+  ],
+  "basic_composition_epsilon": 12.99822154032934,
+  "basic_composition_delta": 1.9825535289452814e-06,
+  "excluded_seed285_sgd_accuracy": 0.7707837694951097,
+  "note": "Historical pilot bounds still compose with joint releases; deleting files does not erase privacy cost."
+}

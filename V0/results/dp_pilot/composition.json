@@ -1,6 +1,0 @@
-{
-  "completed_runs": 3,
-  "basic_composition_epsilon": 12.99822154032934,
-  "basic_composition_delta": 1.9825535289452814e-06,
-  "note": "Per-run epsilons do not describe the entire sweep. Non-private baseline/public-data audit is not a private release of the training partition."
-}

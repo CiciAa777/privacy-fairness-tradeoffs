@@ -1,7 +1,6 @@
 """Validate the completed study from counts, checkpoints, and public dev scores."""
 import json
 import math
-import subprocess
 
 import numpy as np
 import pandas as pd
@@ -117,21 +116,14 @@ def validate_controlled(config):
                 logits, torch.tensor(saved.Y.to_numpy(), dtype=torch.float32)).item()
             assert math.isclose(bce, summary['overall']['bce'], abs_tol=1e-7)
             model_checks += 1
-    original = json.loads((ROOT/'V0/results/baseline/summary.json').read_text(encoding='utf-8'))
-    assert records[('exclude_sensitive', 'sgd', 285)][1]['overall']['accuracy'] == original['overall']['accuracy']
-    for filename in ['main.tex', 'progress_report.pdf']:
-        source = subprocess.check_output(['git', 'show', f'12e6822:reports/progress_report/{filename}'], cwd=ROOT)
-        archived = ROOT/'V0/reports/progress_report'/filename
-        if filename.endswith('.pdf'):
-            assert source == archived.read_bytes()
-        else:
-            assert source.decode('utf-8').replace('\r\n', '\n') == archived.read_text(encoding='utf-8')
-    assert not (ROOT/'figures/controlled_v2').exists(), 'Publication figures were generated before review'
+    historical = json.loads((ROOT/'configs/historical_pilot_reference.json').read_text(encoding='utf-8'))
+    assert records[('exclude_sensitive', 'sgd', 285)][1]['overall']['accuracy'] == historical['excluded_seed285_sgd_accuracy']
     result = dict(completed_full_runs=len(records), private_accountant_checks=accountant_checks,
                   representative_checkpoint_prediction_checks=model_checks, checkpoints_missing=checkpoints_missing,
                   matched_initialization_groups=len(config['feature_policies'])*len(config['seeds']),
                   group_counts_rates_and_esr_checked=True, seed285_v0_baseline_reproduced_exactly=True,
-                  archived_progress_report_unchanged=True, publication_figures_generated=False,
+                  historical_reference_commit=historical['source_commit'],
+                  publication_figures_generated=(root/'report_assets/figures').exists(),
                   test_outcomes_used=False, private_rng_state_exported=False)
     json_write(root/'audit/validation.json', result)
     print(json.dumps(result, indent=2), flush=True)

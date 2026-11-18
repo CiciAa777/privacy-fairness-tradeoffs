@@ -1,5 +1,9 @@
-"""Compile and check the two-page progress report; package portable Overleaf sources."""
+"""Compile local report edits; import/package Overleaf sources only when requested.
+
+Default compilation preserves the downloaded ZIP byte for byte.
+"""
 from pathlib import Path
+import argparse
 import hashlib
 import json
 import re
@@ -11,50 +15,55 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 NAME = 'ECE285_progress_report'
 TEMP = ROOT/'tmp/pdfs/progress_report'
+PORTABLE = [NAME+'.tex', 'figures/racial_impact.pdf', 'tables/sgd_dp1.tex']
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--import-overleaf', action='store_true', help='Import report source/assets from the downloaded ZIP')
+    parser.add_argument('--package', action='store_true', help='Explicitly replace the ZIP with current local source/assets')
+    args = parser.parse_args()
+    archive = HERE/(NAME+'_overleaf.zip')
+    before = hashlib.sha256(archive.read_bytes()).hexdigest() if archive.exists() else None
+    if args.import_overleaf:
+        with zipfile.ZipFile(archive) as package:
+            for filename in PORTABLE:
+                target = HERE/filename
+                assert target.resolve().is_relative_to(HERE.resolve())
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(package.read(filename))
     TEMP.mkdir(parents=True, exist_ok=True)
     for _ in range(2):
-        result = subprocess.run(['pdflatex', '-interaction=nonstopmode', '-halt-on-error',
+        run = subprocess.run(['pdflatex', '-interaction=nonstopmode', '-halt-on-error',
             '-output-directory='+TEMP.as_posix(), NAME+'.tex'], cwd=HERE, capture_output=True, text=True)
-        if result.returncode:
-            raise RuntimeError(result.stdout[-4000:]+result.stderr)
+        if run.returncode:
+            raise RuntimeError(run.stdout[-4000:]+run.stderr)
     log = (TEMP/(NAME+'.log')).read_text(encoding='utf-8', errors='replace')
-    for problem in ['Overfull', 'Undefined control sequence', 'undefined references', 'undefined citations']:
+    for problem in ['Undefined control sequence', 'undefined references', 'undefined citations']:
         if problem in log:
             raise ValueError('Resolve LaTeX problem: '+problem)
     info = subprocess.check_output(['pdfinfo', str(TEMP/(NAME+'.pdf'))], text=True)
-    assert re.search(r'Pages:\s+2\b', info), info
-    assert re.search(r'Page size:\s+612 x 792 pts', info), info
+    pages = int(re.search(r'Pages:\s+(\d+)', info)[1])
     shutil.copyfile(TEMP/(NAME+'.pdf'), HERE/(NAME+'.pdf'))
-    text = subprocess.check_output(['pdftotext', '-layout', str(HERE/(NAME+'.pdf')), '-'], text=True, encoding='utf-8')
-    for expected in ['Cici Xu', 'Shannon Saad', 'additional Folktables tasks', 'ACSIncome', 'December 7, 2026']:
-        assert expected in text, expected
-    assert text.count('Figure 1:')==1 and text.count('Table 1:')==1
+    if args.package:
+        with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED) as package:
+            for filename in PORTABLE:
+                package.write(HERE/filename, filename)
+    after = hashlib.sha256(archive.read_bytes()).hexdigest() if archive.exists() else None
+    if not args.package:
+        assert before==after, 'Compilation must not replace the downloaded Overleaf ZIP'
     source = (HERE/(NAME+'.tex')).read_text(encoding='utf-8')
-    for expected in ['11pt,letterpaper', 'margin=1in', r'\linespread{1}']:
-        assert expected in source
-    assert not any(token in source for token in [r'\small', r'\footnotesize', r'\scriptsize'])
-    # Portable source bundle: no local absolute paths, bibliography service, or result files needed.
-    portable = [NAME+'.tex', 'figures/racial_impact.pdf', 'tables/sgd_dp1.tex', 'README.md']
-    with zipfile.ZipFile(HERE/(NAME+'_overleaf.zip'), 'w', compression=zipfile.ZIP_DEFLATED) as archive:
-        for path in portable:
-            archive.write(HERE/path, path)
-    provenance = json.loads((HERE/'asset_provenance.json').read_text(encoding='utf-8'))
-    for path, sha in provenance['source_sha256'].items():
-        assert hashlib.sha256((ROOT/path).read_bytes()).hexdigest()==sha, path
-    validation = dict(pages=2, page_size='US Letter (612 x 792 pt)', class_option='11pt',
-        margins='1 inch, all sides', line_spread=1, figures=1, tables=1,
-        authors=['Cici Xu', 'Shannon Saad'], feedback_included=True,
-        feedback_source='User-confirmed positive feedback and request for additional Folktables tasks',
-        additional_task_status='ACSIncome planned, not evaluated',
-        latex_overflow_or_unresolved_references=False, source_aggregates_unchanged=True,
-        new_training_or_test_evaluation=False, visual_review='Pending inspection of latest rendered pages',
-        output_sha256={path: hashlib.sha256((HERE/path).read_bytes()).hexdigest() for path in
-                       [NAME+'.tex', NAME+'.pdf', NAME+'_overleaf.zip', 'figures/racial_impact.pdf', 'tables/sgd_dp1.tex']})
+    validation = dict(pages=pages, letterpaper='612 x 792 pts' in info, class_11pt='11pt' in source,
+        one_inch_geometry='margin=1in' in source, single_spacing=r'\linespread{1}' in source,
+        negative_title_offset=r'\vspace*{-0.4in}' in source, small_table_font=r'\small' in source,
+        layout_note='User Overleaf formatting preserved; geometry alone does not verify actual text margins.',
+        overfull_boxes='Overfull' in log, unresolved_references=False,
+        downloaded_zip_preserved=not args.package, no_training_or_new_evaluation=True,
+        visual_review='Pending inspection of newly compiled pages',
+        output_sha256={filename: hashlib.sha256((HERE/filename).read_bytes()).hexdigest()
+                       for filename in [NAME+'.tex', NAME+'.pdf', NAME+'_overleaf.zip']})
     (HERE/'validation.json').write_text(json.dumps(validation, indent=2)+'\n', encoding='utf-8')
-    print('Compiled exactly 2 US Letter pages; 11pt/1-inch/single-spacing settings verified. Overleaf ZIP created.')
+    print(f'Compiled {pages} pages. Downloaded ZIP '+('explicitly repackaged.' if args.package else 'preserved unchanged.'))
 
 
 if __name__=='__main__':

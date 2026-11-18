@@ -12,7 +12,7 @@
   "paired_group_rows": 1450,
   "paired_budget_rows": 30,
   "complete_runs": 60,
-  "frozen_source_files_checked": 439,
+  "frozen_source_files_checked": 436,
   "all_frozen_sources_unchanged": true,
   "training_executed": false,
   "test_evaluated": false,
@@ -26,5 +26,5 @@
     "svg"
   ],
   "summary_tables": 2,
-  "visual_review": "Passed; see visual_review.json for inspected asset hashes and LaTeX checks."
+  "visual_review": "Prior PDF/LaTeX review remains applicable: every reviewed asset is byte-identical; see visual_review.json."
 }

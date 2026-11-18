@@ -1,29 +1,20 @@
 {
-  "pages": 2,
-  "page_size": "US Letter (612 x 792 pt)",
-  "class_option": "11pt",
-  "margins": "1 inch, all sides",
-  "line_spread": 1,
-  "figures": 1,
-  "tables": 1,
-  "authors": [
-    "Cici Xu",
-    "Shannon Saad"
-  ],
-  "feedback_included": true,
-  "feedback_source": "User-confirmed positive feedback and request for additional Folktables tasks",
-  "additional_task_status": "ACSIncome planned, not evaluated",
-  "latex_overflow_or_unresolved_references": false,
-  "source_aggregates_unchanged": true,
-  "new_training_or_test_evaluation": false,
-  "visual_review": "Passed: both final pages rendered with Poppler and inspected; no overflow, clipped plots, or unreadable text.",
+  "pages": 3,
+  "letterpaper": true,
+  "class_11pt": true,
+  "one_inch_geometry": true,
+  "single_spacing": true,
+  "negative_title_offset": true,
+  "small_table_font": true,
+  "layout_note": "User Overleaf formatting preserved; geometry alone does not verify actual text margins.",
+  "overfull_boxes": false,
+  "unresolved_references": false,
+  "downloaded_zip_preserved": true,
+  "no_training_or_new_evaluation": true,
+  "visual_review": "Imported Overleaf version rendered and inspected: three pages, with references on page3. User-authored content/layout preserved; no course-format compliance claim.",
   "output_sha256": {
-    "ECE285_progress_report.tex": "647fb86282c02dc198c2d191da18b9ac07f5bc8921123a6a8f4f1f8545d5e451",
-    "ECE285_progress_report.pdf": "0e2deb89f89af6c2df64e3c8fd14a2076312851235f7824bfdc85d99370eba3e",
-    "ECE285_progress_report_overleaf.zip": "614b4e0a27336b99fc4c949d20163f418e52bc46ee6fee7079213a65185e6268",
-    "figures/racial_impact.pdf": "882efe4ff092aed67cd89f9d7b3415e13855c45e75d087259f045bdf8b249b9b",
-    "tables/sgd_dp1.tex": "fede470777fadaeca6f6d84ad909ce41229aafad9da1e4931414bb8a21d44b60"
-  },
-  "narrative_numbers_checked_against_aggregates": true,
-  "portable_zip_compiles_without_repository": true
+    "ECE285_progress_report.tex": "4d39986181dcd94487b635e7537f9043b02b1c45b32db82f15e374a8227fba82",
+    "ECE285_progress_report.pdf": "8b06af0e46e78faaef9f79d6d069f6308417fe61a908e58c0a592bc57992c4a2",
+    "ECE285_progress_report_overleaf.zip": "09c7165ce40bd6759777437442acbae05acf8a4d349577435d67c0d470df699d"
+  }
 }

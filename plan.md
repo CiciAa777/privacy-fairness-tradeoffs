@@ -1,90 +1,52 @@
-# Privacy-Fairness Tradeoffs: Controlled Rerun Plan
+# Project plan
 
-**Updated November 17, 2026. Progress report: November 18. Final deadline: December 7.**
+Updated November 18, 2026. Progress report: November 18. Final deadline: **December 7, 2026**.
 
-The controlled-rerun request takes priority over the earlier intervention-first schedule. The previous plan is preserved at [V0/plan.md](V0/plan.md), and the exact request is at [V0/CONTROLLED_RERUN_REQUEST.txt](V0/CONTROLLED_RERUN_REQUEST.txt).
+## Completed
 
-## What changed, and why
+- [x] California 2018 filtered ACS Employment cohort, missingness audit, ESP removal, fixed five-way splits and reference-only encoding.
+- [x] Ordinary SGD/DP-SGD MLP; primary sex/race inclusion and secondary exclusion.
+- [x] Five matched seeds at epsilon1/4/8: **40 main runs**.
+- [x] Matched non-private Poisson unclipped/clipped controls: **20 runs**.
+- [x] Per-group accuracy losses, selection/TPR/FPR/PPV/NPV, four fairness gaps, paired mean/sample SD, ESR and household audits.
+- [x] Public-reference smoke checks, numerical unit tests, privacy accounting and representative checkpoint validation.
+- [x] Figure/table assets and progress report; imported and committed the team's Overleaf edits.
+- [x] Consolidated the record into project_log.md and findings.md; removed V0/duplicate notes while retaining history and all current data/results.
 
-| Item | V0 pilots | Controlled v2 |
-| --- | --- | --- |
-| Results location | Moved to `V0/results/` | New runs only in `results/controlled_v2/` |
-| Existing figures/reports/notebooks | Preserved under `V0/` | No edits to the old report or publication figures |
-| Feature policy | SEX/RAC1P excluded, 14 raw inputs, 77 encoded columns | Primary `include_sensitive`; secondary `exclude_sensitive` |
-| Initialization | One seed: 285 | Five matched seeds: 42, 123, 285, 2026, 2027 |
-| Main comparisons | SGD and DP1/4/8, one run each | Same four methods for both feature policies: 40 main runs |
-| Diagnostics | No sampling/clipping controls | Two non-private Poisson controls per policy/seed: 20 control runs |
-| Evaluation | Pilot accuracy/fairness | Add ROC-AUC/BCE, component rates, paired differences, mean/sample SD, ESR diagnostics |
-| Current priority | Interventions and another task next | Validate baseline/DP findings first; interventions and additional tasks wait |
+**Current interpretation:** the large performance change is already present in the clipping-only control, whereas epsilon1/4/8 differences at C=1 are small. The next priority is **varying C at fixed epsilon**, followed by cross-task replication. This is a change in experimental emphasis, not proof that noise/epsilon never matter. Group outcomes and all four fairness definitions remain central.
 
-**Unchanged:** California 2018 cohort; ages 17-89; valid PWGTP; Y=(ESR==1); no ESP/ESR predictors; original fixed person-level split assignments; preprocessing fitted on reference only; final test not evaluated. Audit household overlap without changing splits.
+## November 19-24: clipping sensitivity and cross-task robustness
 
-## Phase 1: preserve and audit (November 17)
+### Priority 1: clipping norm, fixed privacy budget
 
-- [x] Create `V0/` and move existing results, figures, reports, and executed notebooks into it; verify moved files by SHA-256.
-- [x] Save original configs, code, proposal, plan, logs, data manifest, and `V0/SETTINGS.txt`.
-- [x] Review actual filters, feature names, labels, missingness, split alignment, initialization, gradient normalization, and privacy accounting; document findings in `results/controlled_v2/audit/`.
-- [x] Commit/push the preservation checkpoint before changing experiment behavior (`c790371`).
+- [ ] Implement a separate study/output configuration for **C in {0.5,1,2,5}, fixed epsilon1**. Keep the completed controlled_v2 grid/results frozen; do not edit it to reuse different C values under the same paths.
+- [ ] Start with the primary include_sensitive policy and the same five initialization seeds, cohort, splits, architecture, learning rate, epochs, sampling and threshold. Reuse the completed C=1 runs as the reference.
+- [ ] Calibrate/check the noise multiplier sigma with the RDP accountant for the fixed epsilon/delta/sampling/steps. Noise SD on the clipped sum must be **sigma*C**, then the existing expected-batch normalization. At fixed sampling/steps, the same calibrated sigma normally preserves epsilon while absolute noise changes with C.
+- [ ] Add matched **clipped/no-noise Poisson controls** at the new C values, retaining the existing unclipped control. Pair their sampling streams where appropriate; keep private sampling/noise randomness fresh and unpublished. Account for all additional private releases.
+- [ ] Compare overall and per-group accuracy losses, selection rate, TPR/FPR, and accuracy parity/independence/separation/binary sufficiency. Retain sample SD and denominator support.
+- [ ] Inspect saved development score distributions by true label/group, ROC/AUC and threshold0.5 operating points. Distinguish score shifts from changes in discrimination; keep final test outcomes reserved.
+- [ ] If feasible, measure clipping frequency by label/group on permitted public-reference data or via separately budgeted DP training summaries. Do not release raw private gradient norms or unaccounted counts.
+- [ ] Prespecify selected ten-seed follow-ups after reviewing the new variability. Do not rerun every old setting or expand epsilon as the default next sweep.
 
-## Phase 2: controlled implementation and validation (November 17-18)
+### Priority 2: additional Folktables tasks
 
-- [x] Prepare two feature policies on the existing records/splits. Keep original sensitive labels for auditing (87 primary/77 secondary encoded columns).
-- [x] Use the shared MLP input->64->32->1, ReLU, SGD lr0.05/momentum0, 20 epochs, batch512, threshold0.5, fixed final epoch.
-- [x] Implement ordinary shuffled SGD, DP-SGD epsilon1/4/8, Poisson SGD without clipping/noise, and Poisson per-example clipped C=1 SGD without noise.
-- [x] Match DP/control sampling, number of optimizer updates, expected-batch gradient normalization, and clipping implementation. Label both controls non-private.
-- [x] Add deterministic tests comparing manual clipping-only updates with the zero-noise DP optimizer; check leakage, fixed splits, rates/undefined cases, accounting, and paired aggregation.
-- [x] Make runs resumable with unique policy/method/seed directories; preserve completed artifacts and never export private sampling/noise RNG state or raw training gradients.
-- [x] Run synthetic and public-reference smoke checks (12 smoke configurations passed), then commit/push implementation (`c94624f`; paired-aggregation tests added afterward).
+- [ ] Add **ACSIncome first**, responding to the instructor's request for additional tasks. Document its target, cohort, missingness and split rules separately in project_log.md.
+- [ ] Run matched SGD, clipped/no-noise and DP baselines with five seeds, starting at fixed epsilon1/C=1 and selected C values if feasible. Compare group loss and positive-prediction shifts across tasks.
+- [ ] Add a further task only if time permits. Do not mix a different task's labels/cohort into Employment results or imply that ACSIncome is already complete.
 
-## Phase 3: repeated main experiments (start after validation)
+## November 24-30: fairness interventions
 
-Initialization seeds: **[42, 123, 285, 2026, 2027]**.
+- [ ] Implement/evaluate LFR preprocessing and EO post-processing, with matched non-private controls.
+- [ ] Fit learned interventions only on their designated reference/calibration partitions; document privacy assumptions and any extra privacy cost.
+- [ ] Prioritize selected C/privacy settings from the robustness stage. Assess whether interventions reduce disparities and what group/overall accuracy they cost.
 
-- [x] Run 2 feature policies x 5 seeds x (ordinary SGD + DP1 + DP4 + DP8) = **40 main runs**.
-- [x] Match model initialization for comparisons within each feature policy/seed. DP sampling/noise use fresh private randomness.
-- [x] Log exact achieved epsilon/delta, noise/C, sample rate, updates, normalization, runtime, environment, feature/split fingerprints, and completion state.
-- [x] Save development overall/group statistics and local ignored predictions/checkpoints, with fixed final-epoch evaluation.
-- [x] Commit/push completed aggregate run artifacts at useful checkpoints (`73b90ff` contains all 40 main runs). Keep test outcomes reserved.
+## December 1-4: final evaluation
 
-## Phase 4: sampling and clipping controls
+- [ ] Freeze targets, configurations, interventions and reporting choices before evaluating selected models on the held-out test set.
+- [ ] Finalize figures and analyze privacy/accuracy/fairness trade-offs, group support and limitations.
 
-- [x] Run 2 feature policies x 5 seeds x 2 controls = **20 additional non-private runs**.
-- [x] Compare ordinary SGD versus Poisson-unclipped SGD, Poisson-unclipped versus clipped-noise-free SGD, and clipped-noise-free versus DP-SGD.
-- [x] Distinguish sampling/normalization, clipping, and added noise; do not call the diagnostic controls DP.
+## December 5-7: final deliverables
 
-## Phase 5: aggregate and diagnose
+- [ ] Final report, presentation, citations, reproducibility commands and final commit/push by December 7.
 
-- [x] Produce seed-level and aggregate CSV/JSON tables with mean and sample SD (`ddof=1`). Calculate every fairness gap per run before averaging.
-- [x] Report all sex/race/intersection groups, undefined values, denominator support, and a separately labeled race headline comparison restricted to groups with n_development>=500.
-- [x] Pair every DP run with its same-policy, same-initialization SGD baseline; report accuracy/group losses and fairness-component differences by seed.
-- [x] Compare epsilon1/4/8 differences with training variability and compare sensitive-feature inclusion/exclusion.
-- [x] Preserve original ESR1-6; report label-code distributions by sex/race, false-positive composition by ESR, and sex FPR within ESR categories.
-- [x] Audit whether female FPR is consistently higher across seeds. Keep the primary ESR==1 target unchanged pending review.
-- [x] Write a findings summary, exact reproduction/resume commands, completion counts, and limitations. No fabricated missing runs.
-- [x] Prepare a reusable plotting pipeline/specification and recommend at most three main figures; do not render publication figures before review.
-- [x] Commit/push the complete findings checkpoint (final controlled-rerun commit).
-
-**Completed evidence:** [findings](results/controlled_v2/FINDINGS.md), [aggregate tables](results/controlled_v2/aggregate/README.md), and [artifact validation](results/controlled_v2/audit/validation.json). All 60 full runs completed; 12 unit tests and 12 public-reference smoke configurations passed. All 30 private accountant bounds and 12 representative checkpoint predictions were verified; the original seed285 exclusion baseline reproduced exactly. No test outcomes, interventions, target changes, final figures, or report edits were introduced.
-
-## Review gate and remaining schedule
-
-**November 18 progress-report update:** Created [ECE285_progress_report.pdf](reports/progress_report/ECE285_progress_report.pdf), its LaTeX source and portable Overleaf ZIP. The report is exactly two US Letter pages with 11pt text, one-inch margins and single spacing. It includes Cici Xu and Shannon Saad, the instructor's encouragement to evaluate additional Folktables tasks, a short setup list, completed five-seed experiments, one compact racial-impact figure, one fairness table, limitations and the timeline through December 7. ACSIncome, ten-seed follow-ups, clipping sensitivity and LFR/EO are explicitly planned. Source values and the independent Overleaf compilation were verified, and both pages were visually inspected. No training or new evaluation occurred; V0 remains unchanged.
-
-**November 18 report-assets update:** At the team's request, analyzed the existing five-seed runs and produced [REPORT_FINDINGS.md](results/controlled_v2/REPORT_FINDINGS.md), two main multi-panel figures, one optional fairness figure, captions, and two compact tables in [report_assets/](results/controlled_v2/report_assets/README.md). Figure exports are PDF/PNG/SVG and tables include Overleaf-ready LaTeX. All source results/aggregates were preserved and independently checked. No models were retrained, tests evaluated, or additional experiments run. The archived progress report remains unchanged.
-
-Focused experiments proposed for review, **not executed**:
-
-- [ ] Prespecify C in {0.5,1,2,5} at fixed epsilon1, retaining cohort/splits/architecture/optimizer/training budget, initialization seeds, and evaluation. Verify calibrated sigma and Gaussian SD=sigma*C, privacy accounting, and composition. Compare accuracy, group losses, selection rates, TPR/FPR, and all four gaps.
-- [ ] Diagnose saved development scores by label/group using score distributions, ROC/AUC, and threshold operating points. Compare SGD, clipped-noise-free and DP without using final test outcomes.
-- [ ] If feasible, measure clipping frequency by label/group on permitted public-reference data or via separately budgeted DP training summaries; keep raw private gradient norms/counts private.
-- [ ] After reviewing these results, expand selected settings to ten seeds, add ACSIncome, and proceed to EO/LFR. Freeze choices before final test evaluation.
-
-**November 17 findings clarification:** Reorganized `results/controlled_v2/FINDINGS.md` around DP-versus-SGD group impacts before feature-policy comparisons. Added accuracy levels and paired losses for sex/all nine race groups at epsilon1/4/8, all four fairness gaps with direction and seed consistency, and concrete group TPR/FPR comparisons. `GROUP_COMPARISONS.md` provides all race-by-sex intersections and per-budget rate levels/paired changes with denominator support. This is an analysis/presentation update using the existing 60 runs; no training, target, split, test-set, or report changes.
-
-Review the controlled results first. Expand important configurations to ten seeds for final analysis if the five-seed variability makes budget effects inconclusive; record the additional seeds before running them.
-
-Review priorities from the completed rerun: (1) the clipping-only controls reproduce most accuracy loss; (2) the sex group with larger accuracy loss changes with feature inclusion/exclusion; (3) race and sex separation can move in opposite directions; (4) epsilon8 is slightly less accurate than epsilon1 in all five inclusion-policy pairs, so retain that observation and investigate before final generalization; (5) ESR2/3/6 diagnostics and the small military cells require careful target interpretation. Keep the target/splits unchanged until a separate comparison is agreed.
-
-The current progress report schedules robustness/selected ten-seed follow-ups, ACSIncome and feasible clipping sensitivity for November 19-24; LFR/EO for November 24-30; final configuration selection, held-out testing and figures for December 1-4; and final writing/reproducibility for December 5-7. Freeze choices before using final test outcomes. The original V0 report remains archived unchanged.
-
-If execution is blocked, finish available implementation/checks and record the precise failed stage, completed runs, and command to resume. Never mark an unexecuted run complete.
+No clipping-norm sweep, extra task, intervention, ten-seed expansion or final-test evaluation is claimed complete. Settings/history are in [project_log.md](project_log.md); evidence and interpretations are in [findings.md](findings.md).
