@@ -6,7 +6,7 @@ Upload [progress_report_overleaf.zip](progress_report_overleaf.zip) using **New 
 
 The report covers proposal feedback, completed experiments, preliminary observations and limitations, changes since the proposal, and the schedule through December 7. The next steps explicitly include at least three training runs per setting, means/standard deviations/error bars, and repeated ACSIncome baseline/DP comparisons; only single-run ACSEmployment pilots are complete. One table and one group-loss figure appear in the submission. The other two result plots are included in the ZIP for optional use.
 
-For accessible explanations, open [the visual metric guide](../fairness_guide/README.md) or [its printable four-page version](../fairness_guide/fairness_metric_guide.pdf). It has a separate image for each fairness metric with explanations underneath. These use invented counts and are kept in their own folder, outside the submission ZIP.
+For accessible explanations and interpreted results, start with [fairness/README.md](../fairness/README.md). The same folder contains [the illustrated definitions](../fairness/GUIDE.md), [complete observed tables](../fairness/RESULTS.md), and [a printable four-page guide](../fairness/fairness_metric_guide.pdf). Teaching diagrams use invented counts; observed result tables are labeled separately. These remain outside the submission ZIP.
 
 See [OVERLEAF_SYNC.md](OVERLEAF_SYNC.md) for manual updates, direct Overleaf Git integration, and GitHub synchronization. Rebuilding the ZIP or pushing this repository does not automatically update an Overleaf project created by a ZIP upload.
 

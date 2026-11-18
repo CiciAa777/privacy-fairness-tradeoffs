@@ -1,15 +1,49 @@
-# Observed fairness results across privacy budgets
+# Detailed observed fairness results
+
+Start with [the goals, concrete race comparison, and interpretations](README.md). See [GUIDE.md](GUIDE.md) for the illustrated definitions.
 
 **Single-run development results.** Same 30,264 records, threshold 0.5, no fairness intervention yet. No retraining or test evaluation was performed to produce these tables.
 
 ## Read the units first
 
-The four fairness measurements below are **group gaps in percentage points**; lower means closer parity. They are not per-group rates. The later tables show the rates themselves, in percent. A 10-point gap means a difference such as 80% versus 70%.
+The four fairness measurements below are **group gaps in percentage points**; lower means closer parity. They are not per-group rates. The later tables show the rates themselves, in percent. Gaps are calculated before rounding. A 10-point gap means a difference such as 80% versus 70%.
 
 - Accuracy parity: gap in accuracy.
 - Independence: gap in positive-prediction rate.
 - Separation: maximum of TPR and FPR gaps.
 - Binary sufficiency: maximum of PPV and NPV gaps.
+
+## White-alone versus Black-alone: rates across all settings (%)
+
+A descriptive audit of existing full-population models. These are not new models trained only on these races. The comparison does not use White-alone as ground truth or as a mandatory reference group.
+
+| Model | Group | Accuracy (%) | Predicted positive (%) | TPR (%) | FPR (%) | PPV (%) | NPV (%) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| SGD | White alone | 77.33 | 61.02 | 83.82 | 31.17 | 77.88 | 76.46 |
+| SGD | Black or African American alone | 79.73 | 53.00 | 83.40 | 23.79 | 77.11 | 82.70 |
+| DP epsilon 1 | White alone | 76.09 | 66.33 | 87.40 | 38.73 | 74.71 | 78.79 |
+| DP epsilon 1 | Black or African American alone | 78.67 | 57.53 | 86.94 | 29.28 | 74.04 | 84.93 |
+| DP epsilon 4 | White alone | 76.16 | 66.00 | 87.17 | 38.27 | 74.89 | 78.61 |
+| DP epsilon 4 | Black or African American alone | 78.47 | 57.20 | 86.39 | 29.15 | 74.01 | 84.42 |
+| DP epsilon 8 | White alone | 76.10 | 66.18 | 87.28 | 38.55 | 74.78 | 78.68 |
+| DP epsilon 8 | Black or African American alone | 78.33 | 57.20 | 86.26 | 29.28 | 73.89 | 84.27 |
+
+## White-alone versus Black-alone: counts and privacy-related accuracy loss
+
+| Model | Group | n | Actual + | Actual - | TP | TN | FP | FN | Accuracy loss vs SGD (pp) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| SGD | White alone | 18889 | 10710 | 8179 | 8977 | 5630 | 2549 | 1733 | 0.00 |
+| SGD | Black or African American alone | 1500 | 735 | 765 | 613 | 583 | 182 | 122 | 0.00 |
+| DP epsilon 1 | White alone | 18889 | 10710 | 8179 | 9361 | 5011 | 3168 | 1349 | 1.24 |
+| DP epsilon 1 | Black or African American alone | 1500 | 735 | 765 | 639 | 541 | 224 | 96 | 1.07 |
+| DP epsilon 4 | White alone | 18889 | 10710 | 8179 | 9336 | 5049 | 3130 | 1374 | 1.18 |
+| DP epsilon 4 | Black or African American alone | 1500 | 735 | 765 | 635 | 542 | 223 | 100 | 1.27 |
+| DP epsilon 8 | White alone | 18889 | 10710 | 8179 | 9348 | 5026 | 3153 | 1362 | 1.23 |
+| DP epsilon 8 | Black or African American alone | 1500 | 735 | 765 | 634 | 541 | 224 | 101 | 1.40 |
+
+The actual-positive rate is fixed across settings: White-alone 56.70%, Black-alone 49.00%. These are observed label rates, not prediction rates.
+
+![White/Black rates](../../figures/dp_pilot/white_black_group_rates.png)
 
 ## Sex: fairness gaps (pp)
 
@@ -35,6 +69,20 @@ The four fairness measurements below are **group gaps in percentage points**; lo
 
 Race separation/sufficiency remain undefined because Alaska Native alone has n=2, zero actual positives, and zero predicted positives in every run. TPR and PPV have zero denominators. That group also has 100% accuracy and a 0% positive-prediction rate, strongly affecting the reported full-race accuracy/independence gaps. No categories have been dropped or merged.
 
+### Which groups define the full-race gap?
+
+There is no fixed reference race: each gap uses the highest and lowest rate for that model.
+
+| Model | Rate | Highest group (rate %) | Lowest group (rate %) | Gap (pp) |
+| --- | --- | --- | --- | --- |
+| SGD | Accuracy | Alaska Native alone (100.00) | American Indian alone (68.81) | 31.19 |
+| SGD | Predicted positive | Asian alone (69.46) | Alaska Native alone (0.00) | 69.46 |
+| DP epsilon 1 | Accuracy | Alaska Native alone (100.00) | American Indian alone (67.82) | 32.18 |
+| DP epsilon 1 | Predicted positive | Some Other Race alone (76.93) | Alaska Native alone (0.00) | 76.93 |
+| DP epsilon 4 | Accuracy | Alaska Native alone (100.00) | American Indian alone (67.82) | 32.18 |
+| DP epsilon 4 | Predicted positive | Some Other Race alone (77.17) | Alaska Native alone (0.00) | 77.17 |
+| DP epsilon 8 | Accuracy | Alaska Native alone (100.00) | American Indian alone (67.82) | 32.18 |
+| DP epsilon 8 | Predicted positive | Some Other Race alone (77.02) | Alaska Native alone (0.00) | 77.02 |
 ## Sex: component gaps (pp)
 
 | Model | TPR gap | FPR gap | PPV gap | NPV gap |

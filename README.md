@@ -10,8 +10,7 @@ We study whether DP-SGD changes employment-prediction accuracy disproportionatel
 | [02_baseline.ipynb](notebooks/02_baseline.ipynb) | Training settings, loss curves, majority comparison, and development accuracy/fairness results |
 | [03_dp_sgd.ipynb](notebooks/03_dp_sgd.ipynb) | Completed DP-SGD pilots, privacy budgets, learning curves, and group comparisons |
 | [dp_training_log.md](dp_training_log.md) | Exact DP training/accounting settings, preliminary results, and interpretation limits |
-| [Visual metric guide](reports/fairness_guide/README.md) | Four illustrated metric explanations, privacy-budget direction, and original Census race categories |
-| [Observed fairness results](reports/fairness_results/README.md) | Accuracy-parity, independence, separation, and sufficiency gaps by epsilon, underlying group rates, and plots |
+| [Fairness: start here](reports/fairness/README.md) | Desired rate directions, interpreted White/Black comparisons, and links to illustrated definitions and all result tables |
 
 **Progress report:** November 18, 2026. **Final report:** December 7, 2026.
 
@@ -19,7 +18,7 @@ We study whether DP-SGD changes employment-prediction accuracy disproportionatel
 
 The LaTeX report by Xiyin Xu and Shannon Saad is ready as a standalone [Overleaf ZIP](reports/progress_report/progress_report_overleaf.zip), with a compiled [PDF preview](reports/progress_report/progress_report.pdf). In Overleaf, choose **New Project → Upload Project**, upload the ZIP, and compile `main.tex` using **pdfLaTeX**.
 
-All report material is under `reports/`: [progress_report/](reports/progress_report/README.md) contains the current LaTeX source, PDF, Overleaf ZIP, and an `archive/` for the older extended draft; [fairness_guide/](reports/fairness_guide/README.md) contains the illustrated explanations and printable guide. Temporary build files go under ignored `tmp/`. There is no separate `output/` folder.
+All report material is under `reports/`: [progress_report/](reports/progress_report/README.md) contains the current LaTeX source, PDF, Overleaf ZIP, and an `archive/` for the older extended draft; [fairness/](reports/fairness/README.md) combines the explanations, interpreted comparisons, complete tables, teaching images, and printable guide. Temporary build files go under ignored `tmp/`. There is no separate `output/` folder.
 
 Rebuild the report PDF and ZIP with `python scripts/build_progress_report.py` when TeX Live/MiKTeX is installed. The original partner Markdown draft and experiment plots are preserved.
 

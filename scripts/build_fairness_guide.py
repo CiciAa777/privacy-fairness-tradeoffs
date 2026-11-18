@@ -22,9 +22,9 @@ import numpy as np
 sys.path.insert(0, str(ROOT))
 from src.metrics import binary_metrics
 
-OUT = ROOT / 'reports/fairness_guide/figures'
+OUT = ROOT / 'reports/fairness/figures'
 OUT.mkdir(parents=True, exist_ok=True)
-PDF = ROOT / 'reports/fairness_guide/fairness_metric_guide.pdf'
+PDF = ROOT / 'reports/fairness/fairness_metric_guide.pdf'
 PDF.parent.mkdir(parents=True, exist_ok=True)
 
 # The same two hypothetical confusion matrices are used in every image.
@@ -40,14 +40,14 @@ SPECS = [
          question='Are predictions equally often correct for each group?',
          rates=[('accuracy', 'Everyone in the group', 'Accuracy',
                  '(TP + TN) / everyone', [(80, 100), (70, 100)])],
-         memory='Remember: equal correctness.',
+         memory='Goal: equally high accuracy; accuracy gap toward zero.',
          explanation='A is correct for 80 of 100 people; B for 70 of 100. The accuracy gap is 10 percentage points.\n'
                      'This compares groups within ONE model. Accuracy loss instead compares SGD with DP-SGD.'),
     dict(name='independence', title='Independence / demographic parity',
          question='Does each group receive the same proportion of positive predictions?',
          rates=[('selection_rate', 'Everyone in the group', 'Predicted positive',
                  '(TP + FP) / everyone', [(50, 100), (50, 100)])],
-         memory='Remember: equal positive-prediction rates.',
+         memory='Goal: equal positive-prediction rates; no target rate of 100%.',
          explanation='Both groups receive 50 positive predictions out of 100: the independence gap is 0 points.\n'
                      'We do not check whether those predictions are correct. Other fairness gaps can remain large.'),
     dict(name='separation', title='Separation / equalized odds',
@@ -56,7 +56,7 @@ SPECS = [
                  'TP / (TP + FN)', [(40, 50), (30, 40)]),
                 ('fpr', 'Actual negatives only', 'FPR: false alarms',
                  'FP / (FP + TN)', [(10, 50), (20, 60)])],
-         memory='Remember: start from reality, then check the prediction.',
+         memory='Goal: equal TPR and FPR across groups; high TPR, low FPR.',
          explanation='TPR gap = 5 points; FPR gap = 13.3 points. Separation gap = the larger one = 13.3 points.\n'
                      'We compare both components across groups; we do not want a high false-positive rate.'),
     dict(name='sufficiency', title='Sufficiency for binary predictions',
@@ -65,7 +65,7 @@ SPECS = [
                  'TP / (TP + FP)', [(40, 50), (30, 50)]),
                 ('npv', 'Predicted negatives only', 'NPV: negative reliability',
                  'TN / (TN + FN)', [(40, 50), (40, 50)])],
-         memory='Remember: start from the prediction, then check reality.',
+         memory='Goal: equal PPV and NPV across groups; high reliability for both.',
          explanation='PPV gap = 20 points; NPV gap = 0 points. Sufficiency gap = the larger one = 20 points.\n'
                      'We check BOTH positive and negative predictions. This is not a score-calibration test.'),
 ]
@@ -118,4 +118,4 @@ with PdfPages(PDF) as pdf:
         pdf.savefig(fig)
         plt.close(fig)
 
-print('Built four illustrative PNGs and fairness_metric_guide.pdf under reports/fairness_guide/')
+print('Built four illustrative PNGs and fairness_metric_guide.pdf under reports/fairness/')

@@ -1,6 +1,6 @@
 # Understanding our privacy and fairness measurements
 
-This is a learning companion to the two-page progress report. All counts in these pictures are invented, not experimental results. The drawing script checks their rates against our actual `src/metrics.py` functions.
+Start with [README.md](README.md) for the desired rate directions and an interpreted comparison of two actual race groups; [RESULTS.md](RESULTS.md) contains all observed tables. This file explains the concepts with **invented counts, not experimental results**. The drawing script checks their rates against our actual `src/metrics.py` functions.
 
 ## First, what do positive and negative mean?
 
@@ -19,6 +19,8 @@ We calculate a rate for each group, then a **gap = highest group rate minus lowe
 
 **Ask:** "Is the model equally often correct for each group?"
 
+**Want:** equal accuracies across groups, preferably high for both. Smaller accuracy gap is closer to parity; making both groups equally inaccurate is not a good outcome.
+
 Accuracy is `(TP + TN) / n`. The accuracy gap compares groups **within one model**. The example gives 80% versus 70%, so the gap is 10 points.
 
 **Different from accuracy loss:** if one group's SGD accuracy is 80% and its DP-SGD accuracy is 78%, its privacy-related accuracy loss is 2 points. This compares **two models for the same group**. We report both questions; equal losses need not give equal final accuracies.
@@ -29,6 +31,8 @@ Accuracy is `(TP + TN) / n`. The accuracy gap compares groups **within one model
 
 **Ask:** "Out of everyone in each group, how many are predicted positive?"
 
+**Want:** equal positive-prediction rates across groups. There is no universal goal to make this rate higher or lower. Predicting positive for everyone would satisfy independence but could make many mistakes.
+
 The selection rate is `(TP + FP) / n`. In the example, both rates are 50%, so the independence gap is zero. This calculation does not look at the real labels, so a zero gap does not guarantee equal accuracy or equal errors. Also called **demographic parity**.
 
 ## 3. Separation: start from reality
@@ -36,6 +40,8 @@ The selection rate is `(TP + FP) / n`. In the example, both rates are 50%, so th
 ![Illustrative separation comparison](figures/separation.png)
 
 **Ask:** "For people with the same real label, does the model behave similarly across groups?"
+
+**Want:** equal TPR across groups AND equal FPR across groups. For predictive quality, prefer high TPR and low FPR. We do not want TPR to equal FPR within one group; we compare each rate across groups.
 
 - Among **actual positives**, compare how many the model finds: `TPR = TP / (TP + FN)`.
 - Among **actual negatives**, compare how many receive false alarms: `FPR = FP / (FP + TN)`.
@@ -47,6 +53,8 @@ Our separation gap is `max(TPR gap, FPR gap)`. The example has gaps of 5 and 13.
 ![Illustrative binary-sufficiency comparison](figures/sufficiency.png)
 
 **Ask:** "When the model gives the same prediction, is it equally trustworthy for each group?"
+
+**Want:** equal PPV across groups AND equal NPV across groups, preferably high for both. We do not require PPV and NPV to equal each other within one group.
 
 - Among **predicted positives**, compare the fraction actually positive: `PPV = TP / (TP + FP)`.
 - Among **predicted negatives**, compare the fraction actually negative: `NPV = TN / (TN + FN)`.
@@ -74,7 +82,7 @@ We retain all nine original `RAC1P` codes; we have not merged people into new ra
 
 "Some Other Race alone" is not our catch-all for small groups and is not a synonym for Hispanic ethnicity. "Two or More Races" is not a merger we made. These categories are broad because `RAC1P` is already a Census recode. See the [2018 ACS PUMS dictionary, printed page 103](https://www2.census.gov/programs-surveys/acs/tech_docs/pums/data_dict/PUMS_Data_Dictionary_2018.pdf).
 
-The group-loss plot displays only race groups with at least 500 development records for readability. That display filter does not merge categories or remove people from training or the full audit. A later, separately labeled White-alone/Black-alone comparison would be a different cohort, not a relabeling of the current results.
+The group-loss plot displays only race groups with at least 500 development records for readability. That display filter does not merge categories or remove people from training or the full audit. The new White-alone/Black-alone comparison in README.md audits those two groups within the existing full-population models. Future models trained only on a restricted race cohort would be a separate experiment.
 
 ## Rebuild the illustrations
 
@@ -82,4 +90,4 @@ The group-loss plot displays only race groups with at least 500 development reco
 .\.venv\Scripts\python.exe scripts\build_fairness_guide.py
 ```
 
-Outputs: four PNGs under `reports/fairness_guide/figures/` and a [four-page printable guide](fairness_metric_guide.pdf) beside this README. No training or test records are read.
+Outputs: four PNGs under `reports/fairness/figures/` and a [four-page printable guide](fairness_metric_guide.pdf) beside this file. No training or test records are read.
