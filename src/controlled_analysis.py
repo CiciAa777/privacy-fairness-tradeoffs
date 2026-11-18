@@ -91,6 +91,10 @@ def summarize_controlled(config):
     esr_frame = pd.concat(esr, ignore_index=True)
     group_frame.to_csv(out/'group_seed_metrics.csv', index=False)
     esr_frame.to_csv(out/'esr_seed_metrics.csv', index=False)
+    group_changes = paired_group_rates(group_frame)
+    group_changes.to_csv(out/'group_rate_changes_seed.csv', index=False)
+    aggregate(group_changes, ['feature_policy', 'method', 'attribute', 'group'], GROUP_RATES).to_csv(
+        out/'group_rate_changes_mean_std.csv', index=False)
     base_keys = ['feature_policy', 'method']
     overall_metrics = ['accuracy', 'balanced_accuracy', 'roc_auc', 'bce', 'positive_rate', 'selection_rate',
                        'tpr', 'fpr', 'ppv', 'npv']
@@ -212,6 +216,7 @@ def summarize_controlled(config):
 - `metrics_mean_std.csv/json`: mean, sample SD (ddof=1), valid seed count, and completed seed count for each metric. Undefined metrics remain missing, never zero. Means use valid values only; a metric with fewer valid than completed seeds does not describe every seed.
 - `paired_vs_sgd_*`: method minus same-policy/same-seed SGD. `accuracy_loss_pp` reverses the sign and multiplies by100, so positive means harm. Other differences retain their original units.
 - `group_*`: all sex, nine race, and race-by-sex groups; counts, rates, and denominator flags are retained. Headline race gaps use a separately labeled n>=500 comparison.
+- `group_rate_changes_*`: group-specific rate differences (method minus matched SGD, in fractions). Convert to percentage points by multiplying by100. These are paired before calculating sample SD. See `../GROUP_COMPARISONS.md` for readable levels and changes across all budgets.
 - `budget_differences_*`: later-listed DP budget minus earlier-listed budget, paired by initialization within policy. Fresh sampling/noise still vary.
 - `feature_policy_differences_*`: include_sensitive minus exclude_sensitive at the same method/seed. Input dimensions differ, so identical weights across policies are not claimed.
 - `loss_disparity_*`: group loss ranges computed per run before averaging; columns ending `_pp` are already percentage points.
@@ -223,6 +228,240 @@ Seed variation is training variation on this fixed split, not population-samplin
 ''', encoding='utf-8')
     print(f'Aggregated {len(summaries)} completed runs; missing={len(missing)}. No figures rendered.', flush=True)
     return status
+
+
+GROUP_RATES = ['accuracy', 'balanced_accuracy', 'selection_rate', 'tpr', 'fpr', 'ppv', 'npv']
+GROUP_NAMES = {
+    'SEX': {'1': 'Male', '2': 'Female'},
+    'RAC1P': {'1': 'White alone', '2': 'Black or African American alone',
+              '3': 'American Indian alone', '4': 'Alaska Native alone',
+              '5': 'AIAN specified/unspecified; no other races', '6': 'Asian alone',
+              '7': 'Native Hawaiian / Other Pacific Islander alone',
+              '8': 'Some Other Race alone', '9': 'Two or More Races'},
+}
+
+
+def paired_group_rates(groups):
+    """Compare the same people/group/initialization, preserving undefined rates."""
+    keys = ['feature_policy', 'model_seed', 'attribute', 'group']
+    if groups.duplicated(keys+['method']).any():
+        raise ValueError('Duplicate group/policy/method/seed rows')
+    baseline = groups.loc[groups.method.eq('sgd'), keys+['n']+GROUP_RATES]
+    joined = groups.loc[groups.method.ne('sgd')].merge(
+        baseline, on=keys, how='left', suffixes=('', '_sgd'), validate='many_to_one', indicator=True)
+    if joined._merge.ne('both').any() or joined.n.ne(joined.n_sgd).any():
+        raise ValueError('Missing or inconsistent same-group SGD reference')
+    result = joined[keys+['method']].copy()
+    for metric in GROUP_RATES:
+        result[metric] = joined[metric]-joined[metric+'_sgd']
+    return result
+
+
+def group_label(attribute, group):
+    if attribute == 'RAC1P_SEX':
+        race, sex = group.split('_')
+        return GROUP_NAMES['RAC1P'][race]+' / '+GROUP_NAMES['SEX'][sex]
+    return GROUP_NAMES[attribute][group]
+
+
+def write_group_findings(config, root, stats, paired):
+    """Put group harm and fairness first; retain every group in a readable appendix."""
+    out = root/'aggregate'
+    groups = pd.read_csv(out/'group_mean_std.csv', dtype={'group': str})
+    raw = pd.read_csv(out/'group_seed_metrics.csv', dtype={'group': str})
+    changes = pd.read_csv(out/'group_rate_changes_mean_std.csv', dtype={'group': str})
+    losses = pd.read_csv(out/'group_accuracy_losses_mean_std.csv', dtype={'group': str})
+    paired_raw = pd.read_csv(out/'paired_vs_sgd_seed.csv')
+    methods = ['sgd']+[f'dp_epsilon_{eps:g}' for eps in config['target_epsilons']]
+    primary = config['feature_policies'][0]
+
+    def lookup(frame, **identity):
+        selected = frame
+        for column, value in identity.items():
+            selected = selected.loc[selected[column].eq(value)]
+        if len(selected) != 1:
+            raise ValueError(f'Expected one statistic for {identity}, found {len(selected)}')
+        return selected.iloc[0]
+
+    def show(row, scale=100, signed=False):
+        if pd.isna(row['mean']):
+            return 'undefined'
+        mean = format(scale*row['mean'], '+.2f' if signed else '.2f')
+        sd = 'undefined' if pd.isna(row['std']) else f'{scale*row["std"]:.2f}'
+        count = '' if row.valid_seeds == len(config['seeds']) else f' (n={int(row.valid_seeds)})'
+        return f'{mean} +/- {sd}{count}'
+
+    def gs(policy, method, attribute, group, metric):
+        return lookup(groups, feature_policy=policy, method=method, attribute=attribute, group=group, metric=metric)
+
+    def mean(policy, method, attribute, group, metric):
+        return 100*gs(policy, method, attribute, group, metric)['mean']
+
+    def rate_pair(policy, attribute, group, metric):
+        a, b = [mean(policy, method, attribute, group, metric) for method in ['sgd', 'dp_epsilon_1']]
+        return 'undefined' if pd.isna(a) or pd.isna(b) else f'{a:.2f} -> {b:.2f}'
+
+    support = raw.loc[raw.feature_policy.eq(primary) & raw.method.eq('sgd') &
+                      raw.model_seed.eq(config['seeds'][0])].set_index(['attribute', 'group'])
+    summary = [
+        '## What DP changes for different groups\n',
+        'The main comparison is **DP-SGD versus non-private SGD on the same feature policy, split, and initialization seed**. '
+        f'The primary setting is `{primary}` (sex and race are available as input features). '
+        'The secondary setting repeats the comparison without those two predictors. '
+        'Every reported group is still evaluated under both settings.\n',
+        'Read accuracy and disparity together: two groups can both lose accuracy while their gap shrinks. '
+        'A smaller fairness gap alone does not mean either group became better off. '
+        'All results below use the fixed development set and five training seeds.\n',
+        '### Which groups lose accuracy?\n',
+        'Accuracy is percent mean +/- sample SD. Loss is **SGD accuracy minus DP accuracy**, '
+        'in percentage points (pp), paired by seed before averaging. Positive loss means worse accuracy under DP. '
+        'The three loss columns cover every tested privacy budget.\n',
+    ]
+    for policy in config['feature_policies']:
+        records = []
+        for attribute in ['SEX', 'RAC1P']:
+            for group in GROUP_NAMES[attribute]:
+                n = int(support.loc[(attribute, group), 'n'])
+                row = {'Group': group_label(attribute, group), 'People': n,
+                       'SGD accuracy (%)': show(gs(policy, 'sgd', attribute, group, 'accuracy')),
+                       'DP1 accuracy (%)': show(gs(policy, 'dp_epsilon_1', attribute, group, 'accuracy'))}
+                for method in methods[1:]:
+                    loss = lookup(losses, feature_policy=policy, method=method, attribute=attribute,
+                                  group=group, metric='accuracy_loss_pp')
+                    row[f'Loss eps{method.rsplit("_", 1)[1]} (pp)'] = show(loss, scale=1, signed=True)
+                records.append(row)
+        summary += [f'#### {policy}\n', markdown(pd.DataFrame(records)), '\n']
+        supported = losses.loc[losses.feature_policy.eq(policy) & losses.method.eq('dp_epsilon_1') &
+                               losses.attribute.eq('RAC1P') & losses.group.isin(
+                                   [g for g in GROUP_NAMES['RAC1P'] if support.loc[('RAC1P', g), 'n'] >= config['minimum_headline_race_n']])]
+        worst = supported.loc[supported['mean'].idxmax()]
+        male, female = [lookup(losses, feature_policy=policy, method='dp_epsilon_1', attribute='SEX',
+                              group=g, metric='accuracy_loss_pp')['mean'] for g in ['1', '2']]
+        summary += [f'At eps1, male accuracy loses {male:.2f} pp and female accuracy loses {female:.2f} pp. '
+                    f'Among race groups with at least {config["minimum_headline_race_n"]} people, '
+                    f'{group_label("RAC1P", worst.group)} has the largest mean loss ({worst["mean"]:.2f} pp). '
+                    'These are observed training-seed averages, not a claim that a particular group always loses most.\n']
+    summary += ['Race categories are original ACS categories; none were merged. Small groups remain visible. '
+                'In particular, the two-person Alaska Native-alone group has no actual positives, so its 100% accuracy '
+                'does not establish good predictive performance.\n',
+                '### What each fairness gap asks\n',
+                markdown(pd.DataFrame([
+                    {'Metric': 'Accuracy parity', 'Rates that should match': 'Accuracy across groups', 'Reported gap': 'max accuracy - min accuracy'},
+                    {'Metric': 'Independence', 'Rates that should match': 'Predicted-positive / selection rate', 'Reported gap': 'max selection rate - min selection rate'},
+                    {'Metric': 'Separation (equalized odds)', 'Rates that should match': 'TPR and FPR separately', 'Reported gap': 'larger of TPR range and FPR range'},
+                    {'Metric': 'Binary sufficiency', 'Rates that should match': 'PPV and NPV separately', 'Reported gap': 'larger of PPV range and NPV range'},
+                ])), '\n',
+                'For every gap, **0 means parity and smaller means closer to that fairness criterion**. '
+                'This binary sufficiency diagnostic concerns thresholded predictions, not full score calibration. '
+                'Gaps are computed within each seed before averaging. They need not equal the gap between averaged rates.\n',
+                '### Did DP improve or worsen these gaps?\n',
+                'Each level is mean +/- sample SD in pp. The signed change is DP1 minus matched SGD: '
+                '**positive means a larger gap; negative means a smaller gap**. '
+                'Sex uses both groups. Headline race uses only the fixed five groups with development n>=500.\n']
+    for policy in config['feature_policies']:
+        records = []
+        for scope, title in [('SEX', 'Sex'), ('RAC1P_n500', 'Race n>=500')]:
+            for metric, label in [('accuracy_gap', 'Accuracy parity'), ('independence', 'Independence'),
+                                  ('separation', 'Separation'), ('sufficiency', 'Binary sufficiency')]:
+                key = f'{scope}_{metric}'
+                row = {'Comparison': title, 'Metric': label}
+                for method in methods:
+                    row['SGD' if method == 'sgd' else 'DP eps'+method.rsplit('_', 1)[1]] = show(
+                        lookup(stats, feature_policy=policy, method=method, metric=key))
+                delta = lookup(paired, feature_policy=policy, method='dp_epsilon_1', metric=key)
+                row['DP1 change (pp)'] = show(delta, signed=True)
+                values = paired_raw.loc[paired_raw.feature_policy.eq(policy) & paired_raw.method.eq('dp_epsilon_1'), key].dropna()
+                row['Smaller / larger gap seeds'] = f'{int((values < 0).sum())} / {int((values > 0).sum())} of {len(values)}'
+                records.append(row)
+        summary += [f'#### {policy}\n', markdown(pd.DataFrame(records)), '\n']
+    for policy in config['feature_policies']:
+        for scope, title in [('SEX', 'sex'), ('RAC1P_n500', 'headline race')]:
+            directions = {'smaller': [], 'larger': [], 'unchanged': []}
+            for metric, label in [('accuracy_gap', 'accuracy parity'), ('independence', 'independence'),
+                                  ('separation', 'separation'), ('sufficiency', 'binary sufficiency')]:
+                change = lookup(paired, feature_policy=policy, method='dp_epsilon_1', metric=f'{scope}_{metric}')['mean']
+                directions['smaller' if change < 0 else 'larger' if change > 0 else 'unchanged'].append(label)
+            description = '; '.join(f'{direction} mean gaps: {", ".join(labels)}' for direction, labels in directions.items() if labels)
+            summary += [f'- {policy}, {title}, DP1 versus SGD: {description}.\n']
+    summary += ['The answer therefore depends on the fairness definition and group comparison.\n',
+                '### Which actual rates drive the change? Primary setting, SGD -> DP1\n',
+                'Entries show mean rates in percent. Selection is the fraction predicted positive. '
+                'TPR is the fraction of actual positives correctly predicted positive. '
+                'FPR is the fraction of actual negatives incorrectly predicted positive. '
+                'PPV is the fraction of predicted positives that are actually positive. '
+                'NPV is the fraction of predicted negatives that are actually negative. '
+                'For predictive performance, higher TPR/PPV/NPV and lower FPR are desirable; '
+                'for the corresponding fairness criterion, groups should have matching rates.\n']
+    rows = []
+    for attribute in ['SEX', 'RAC1P']:
+        for group in GROUP_NAMES[attribute]:
+            if attribute == 'RAC1P' and support.loc[(attribute, group), 'n'] < config['minimum_headline_race_n']:
+                continue
+            rows.append({'Group': group_label(attribute, group), **{label: rate_pair(primary, attribute, group, metric)
+                        for metric, label in [('selection_rate', 'Selection'), ('tpr', 'TPR'), ('fpr', 'FPR'), ('ppv', 'PPV'), ('npv', 'NPV')]}})
+    summary += [markdown(pd.DataFrame(rows)), '\n']
+    for attribute, a, b, label in [('SEX', '1', '2', 'Male versus female'), ('RAC1P', '1', '2', 'White-alone versus Black-alone')]:
+        for metric in ['tpr', 'fpr']:
+            old = abs(mean(primary, 'sgd', attribute, a, metric)-mean(primary, 'sgd', attribute, b, metric))
+            new = abs(mean(primary, 'dp_epsilon_1', attribute, a, metric)-mean(primary, 'dp_epsilon_1', attribute, b, metric))
+            summary += [f'- {label}: the absolute difference between mean {metric.upper()} rates changes '
+                        f'from {old:.2f} to {new:.2f} pp.\n']
+    summary += ['Both sex groups have higher TPR **and higher FPR** under DP1. The smaller sex separation gap '
+                'therefore coexists with more false positives and lower accuracy. White-alone and Black-alone '
+                'are one concrete pair, not a reference population or the entire multi-race comparison. '
+                'The headline race separation range covers all five supported groups.\n',
+                '**Full group tables:** [GROUP_COMPARISONS.md](GROUP_COMPARISONS.md) includes both policies, '
+                'all three budgets, all nine race groups and all 18 race-by-sex intersections, '
+                'with denominator support, rate levels, and paired changes.\n']
+
+    detail = ['# DP versus non-private SGD: full group comparisons\n',
+              '[Return to findings](FINDINGS.md). Development set only, fixed threshold 0.5. '
+              'Levels are percentages; changes are percentage points. Each cell is mean +/- sample SD across five seeds. '
+              'Changes use same-policy, same-group, same-initialization SGD before averaging. '
+              'Positive accuracy change means improvement (opposite to the positive-loss convention in FINDINGS). '
+              'Positive FPR change means more false positives. Equal selection/TPR/FPR/PPV/NPV across groups '
+              'is the relevant fairness goal; a rate change within one group is not itself a fairness gap.\n',
+              '## Fixed group support\n',
+              'Counts describe people in one development set. Actual-positive and actual-negative counts are '
+              'the TPR and FPR denominators. Predicted-positive and predicted-negative counts (PPV/NPV denominators) '
+              'vary by model and seed. The smallest of these four conditional denominators across seeds is shown '
+              'in each levels table. Counts below30 give weak support. Undefined rates retain missing values.\n']
+    for attribute in ['SEX', 'RAC1P', 'RAC1P_SEX']:
+        block = support.loc[attribute]
+        detail += [f'### {attribute}\n', markdown(pd.DataFrame([
+            {'Group': group_label(attribute, group), 'People': int(row.n), 'Actual positive': int(row.actual_positives),
+             'Actual negative': int(row.actual_negatives), 'Actual positive (%)': f'{100*row.positive_rate:.2f}' if row.n else 'undefined'}
+            for group, row in block.iterrows()])), '\n']
+    for policy in config['feature_policies']:
+        detail += [f'## {policy}\n']
+        for attribute in ['SEX', 'RAC1P', 'RAC1P_SEX']:
+            detail += [f'### {attribute}\n']
+            for method in methods:
+                rows = []
+                subset = raw.loc[raw.feature_policy.eq(policy) & raw.method.eq(method) & raw.attribute.eq(attribute)]
+                for group, block in subset.groupby('group', sort=False):
+                    rows.append({'Group': group_label(attribute, group),
+                        **{label: show(gs(policy, method, attribute, group, metric)) for metric, label in
+                           [('accuracy', 'Accuracy'), ('selection_rate', 'Selection'), ('tpr', 'TPR'), ('fpr', 'FPR'), ('ppv', 'PPV'), ('npv', 'NPV')]},
+                        'Min conditional n': int(block.min_conditional_count.min())})
+                detail += [f'#### {method}: levels (%)\n', markdown(pd.DataFrame(rows)), '\n']
+                if method != 'sgd':
+                    rows = []
+                    subset = changes.loc[changes.feature_policy.eq(policy) & changes.method.eq(method) & changes.attribute.eq(attribute)]
+                    for group, block in subset.groupby('group', sort=False):
+                        rows.append({'Group': group_label(attribute, group), **{label: show(block.loc[block.metric.eq(metric)].iloc[0], signed=True)
+                            for metric, label in [('accuracy', 'Accuracy change'), ('selection_rate', 'Selection change'),
+                                ('tpr', 'TPR change'), ('fpr', 'FPR change'), ('ppv', 'PPV change'), ('npv', 'NPV change')]}})
+                    detail += [f'#### {method} minus matched SGD (pp)\n', markdown(pd.DataFrame(rows)), '\n']
+    detail += ['## Source tables and reproduction\n',
+               'Levels: `aggregate/group_seed_metrics.csv` and `aggregate/group_mean_std.csv`. '
+               'Paired changes: `aggregate/group_rate_changes_seed.csv` and `aggregate/group_rate_changes_mean_std.csv`. '
+               'Accuracy losses: `aggregate/group_accuracy_losses_mean_std.csv`. '
+               'All raw rate/change CSV values are fractions except explicitly named `_pp` columns. '
+               'Mean fairness gaps in FINDINGS are computed per seed, not from rounded table entries. '
+               'Regenerate with `scripts/run_controlled.py --stage summarize`; no retraining or test evaluation is needed.\n']
+    (root/'GROUP_COMPARISONS.md').write_text('\n'.join(detail), encoding='utf-8')
+    return summary
 
 
 def write_findings(config, root, seeds, stats, paired, budget_stats, persistence, status):
@@ -271,7 +510,7 @@ def write_findings(config, root, seeds, stats, paired, budget_stats, persistence
         headline += ['Ten-seed follow-up is recommended before final generalizations. Headline race gaps use the fixed '
                      'n>=500 development groups (White-alone, Black-alone, Asian-alone, Some Other Race-alone, '
                      'Two or More Races). All nine races/intersections remain in detailed CSVs.\n']
-        text[2:2] = headline
+        text[2:2] = write_group_findings(config, root, stats, paired)+headline
     for policy in config['feature_policies']:
         records = []
         for method in MAIN+CONTROLS:
@@ -351,17 +590,7 @@ def write_findings(config, root, seeds, stats, paired, budget_stats, persistence
     extra += [markdown(feature_display[['method', 'metric', 'mean', 'std', 'valid_seeds']].round(5)), '\n',
               'Differences are include_sensitive minus exclude_sensitive, in percentage points. '
               'Positive accuracy difference favors inclusion; positive gap difference indicates more disparity on that criterion. '
-              'All budgets and controls are retained in the full feature-policy CSV.\n',
-              '## Which sex group loses more accuracy? DP1 example\n']
-    group_losses = pd.read_csv(root/'aggregate/group_accuracy_losses_mean_std.csv', dtype={'group': str})
-    group_losses = group_losses.loc[group_losses.method.eq('dp_epsilon_1') & group_losses.attribute.eq('SEX')].copy()
-    group_losses['Group'] = group_losses.group.map({'1': 'Male', '2': 'Female'})
-    larger = {policy: block.loc[block['mean'].idxmax(), 'Group'] for policy, block in group_losses.groupby('feature_policy')}
-    ordering_text = '; '.join(f'{policy}: larger mean loss for {group}' for policy, group in larger.items())
-    extra += [markdown(group_losses[['feature_policy', 'Group', 'mean', 'std', 'valid_seeds']].round(5)), '\n',
-              'Values are accuracy losses in percentage points versus each group\'s matched SGD seed. '
-              f'Observed ordering: {ordering_text}. Full race/intersection losses '
-              'and per-run loss disparities are retained in the group-loss CSVs.\n']
+              'All budgets and controls are retained in the full feature-policy CSV.\n']
     esr_stats = pd.read_csv(root/'aggregate/esr_mean_std.csv', dtype={'group': str})
     distribution = pd.read_csv(root/'audit/development_esr_distributions.csv', dtype={'group': str})
     within = pd.read_csv(root/'aggregate/within_esr_sex_fpr_difference_seed.csv')

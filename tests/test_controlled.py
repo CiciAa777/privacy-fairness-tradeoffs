@@ -18,10 +18,33 @@ from src.baseline import make_model
 from src.controlled_data import POLICIES, feature_frame
 from src.controlled_training import gaps_from_frame, esr_diagnostics
 from src.metrics import binary_metrics
-from src.controlled_analysis import aggregate, paired_difference
+from src.controlled_analysis import aggregate, paired_difference, paired_group_rates, GROUP_RATES
 
 
 class ControlledTests(unittest.TestCase):
+    def test_group_changes_pair_by_group_and_seed_and_keep_undefined(self):
+        rows = []
+        for seed, group, base, private in [(42, '1', .9, .8), (42, '2', .6, .65),
+                                            (123, '1', .8, .75), (123, '2', .7, .65)]:
+            for method, rate in [('sgd', base), ('dp_epsilon_1', private)]:
+                row = dict(feature_policy='include_sensitive', method=method, model_seed=seed,
+                           attribute='SEX', group=group, n=10, **{metric: rate for metric in GROUP_RATES})
+                if group == '2':
+                    row['ppv'] = np.nan
+                rows.append(row)
+        frame = pd.DataFrame(rows).sample(frac=1, random_state=5)
+        differences = paired_group_rates(frame)
+        first = differences.loc[differences.group.eq('1')].accuracy
+        np.testing.assert_allclose(sorted(first), [-.1, -.05])
+        self.assertTrue(differences.loc[differences.group.eq('2'), 'ppv'].isna().all())
+        result = aggregate(differences, ['feature_policy', 'method', 'attribute', 'group'], GROUP_RATES)
+        row = result.loc[result.group.eq('1') & result.metric.eq('accuracy')].iloc[0]
+        self.assertAlmostEqual(row['mean'], -.075)
+        self.assertAlmostEqual(row['std'], np.std([-.1, -.05], ddof=1))
+        missing = frame.loc[~(frame.method.eq('sgd') & frame.group.eq('1') & frame.model_seed.eq(42))]
+        with self.assertRaises(ValueError):
+            paired_group_rates(missing)
+
     def test_poisson_controls_use_the_same_sampling_stream(self):
         dataset = TensorDataset(torch.arange(128).reshape(64, 2).float(), torch.zeros(64))
         generator_a = torch.Generator().manual_seed(777)

@@ -4,6 +4,7 @@
 - `metrics_mean_std.csv/json`: mean, sample SD (ddof=1), valid seed count, and completed seed count for each metric. Undefined metrics remain missing, never zero. Means use valid values only; a metric with fewer valid than completed seeds does not describe every seed.
 - `paired_vs_sgd_*`: method minus same-policy/same-seed SGD. `accuracy_loss_pp` reverses the sign and multiplies by100, so positive means harm. Other differences retain their original units.
 - `group_*`: all sex, nine race, and race-by-sex groups; counts, rates, and denominator flags are retained. Headline race gaps use a separately labeled n>=500 comparison.
+- `group_rate_changes_*`: group-specific rate differences (method minus matched SGD, in fractions). Convert to percentage points by multiplying by100. These are paired before calculating sample SD. See `../GROUP_COMPARISONS.md` for readable levels and changes across all budgets.
 - `budget_differences_*`: later-listed DP budget minus earlier-listed budget, paired by initialization within policy. Fresh sampling/noise still vary.
 - `feature_policy_differences_*`: include_sensitive minus exclude_sensitive at the same method/seed. Input dimensions differ, so identical weights across policies are not claimed.
 - `loss_disparity_*`: group loss ranges computed per run before averaging; columns ending `_pp` are already percentage points.

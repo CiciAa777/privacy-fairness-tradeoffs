@@ -68,6 +68,8 @@ Initialization seeds: **[42, 123, 285, 2026, 2027]**.
 
 ## Review gate and remaining schedule
 
+**November 17 findings clarification:** Reorganized `results/controlled_v2/FINDINGS.md` around DP-versus-SGD group impacts before feature-policy comparisons. Added accuracy levels and paired losses for sex/all nine race groups at epsilon1/4/8, all four fairness gaps with direction and seed consistency, and concrete group TPR/FPR comparisons. `GROUP_COMPARISONS.md` provides all race-by-sex intersections and per-budget rate levels/paired changes with denominator support. This is an analysis/presentation update using the existing 60 runs; no training, target, split, test-set, or report changes.
+
 Review the controlled results first. Expand important configurations to ten seeds for final analysis if the five-seed variability makes budget effects inconclusive; record the additional seeds before running them.
 
 Review priorities from the completed rerun: (1) the clipping-only controls reproduce most accuracy loss; (2) the sex group with larger accuracy loss changes with feature inclusion/exclusion; (3) race and sex separation can move in opposite directions; (4) epsilon8 is slightly less accurate than epsilon1 in all five inclusion-policy pairs, so retain that observation and investigate before final generalization; (5) ESR2/3/6 diagnostics and the small military cells require careful target interpretation. Keep the target/splits unchanged until a separate comparison is agreed.

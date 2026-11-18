@@ -2,6 +2,137 @@
 
 Completed main runs: **40/40**; controls: **20/20**. Development data only. Means +/- sample SD across training seeds; no population-sampling uncertainty is estimated.
 
+## What DP changes for different groups
+
+The main comparison is **DP-SGD versus non-private SGD on the same feature policy, split, and initialization seed**. The primary setting is `include_sensitive` (sex and race are available as input features). The secondary setting repeats the comparison without those two predictors. Every reported group is still evaluated under both settings.
+
+Read accuracy and disparity together: two groups can both lose accuracy while their gap shrinks. A smaller fairness gap alone does not mean either group became better off. All results below use the fixed development set and five training seeds.
+
+### Which groups lose accuracy?
+
+Accuracy is percent mean +/- sample SD. Loss is **SGD accuracy minus DP accuracy**, in percentage points (pp), paired by seed before averaging. Positive loss means worse accuracy under DP. The three loss columns cover every tested privacy budget.
+
+#### include_sensitive
+
+| Group | People | SGD accuracy (%) | DP1 accuracy (%) | Loss eps1 (pp) | Loss eps4 (pp) | Loss eps8 (pp) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Male | 14826 | 80.92 +/- 0.44 | 78.67 +/- 0.59 | +2.26 +/- 0.85 | +2.19 +/- 0.87 | +2.36 +/- 0.86 |
+| Female | 15438 | 74.06 +/- 0.68 | 72.49 +/- 0.12 | +1.57 +/- 0.73 | +1.57 +/- 0.70 | +1.59 +/- 0.72 |
+| White alone | 18889 | 77.61 +/- 0.59 | 75.98 +/- 0.31 | +1.63 +/- 0.72 | +1.58 +/- 0.72 | +1.69 +/- 0.68 |
+| Black or African American alone | 1500 | 79.15 +/- 1.07 | 78.04 +/- 0.47 | +1.11 +/- 1.19 | +1.25 +/- 1.21 | +1.41 +/- 1.28 |
+| American Indian alone | 202 | 67.43 +/- 0.89 | 66.04 +/- 0.75 | +1.39 +/- 1.18 | +1.49 +/- 1.53 | +1.29 +/- 1.47 |
+| Alaska Native alone | 2 | 100.00 +/- 0.00 | 100.00 +/- 0.00 | +0.00 +/- 0.00 | +0.00 +/- 0.00 | +0.00 +/- 0.00 |
+| AIAN specified/unspecified; no other races | 81 | 80.00 +/- 1.03 | 77.28 +/- 1.10 | +2.72 +/- 1.03 | +2.47 +/- 0.87 | +2.96 +/- 0.68 |
+| Asian alone | 5017 | 76.80 +/- 0.67 | 74.93 +/- 0.34 | +1.87 +/- 0.86 | +1.84 +/- 0.94 | +1.90 +/- 0.90 |
+| Native Hawaiian / Other Pacific Islander alone | 95 | 83.79 +/- 0.94 | 82.53 +/- 0.58 | +1.26 +/- 0.88 | +1.47 +/- 0.94 | +1.26 +/- 0.88 |
+| Some Other Race alone | 3299 | 77.14 +/- 0.22 | 73.13 +/- 0.56 | +4.01 +/- 0.74 | +4.01 +/- 0.63 | +4.12 +/- 0.70 |
+| Two or More Races | 1179 | 76.61 +/- 1.11 | 74.93 +/- 0.52 | +1.68 +/- 1.17 | +1.58 +/- 1.09 | +1.61 +/- 1.33 |
+
+
+At eps1, male accuracy loses 2.26 pp and female accuracy loses 1.57 pp. Among race groups with at least 500 people, Some Other Race alone has the largest mean loss (4.01 pp). These are observed training-seed averages, not a claim that a particular group always loses most.
+
+#### exclude_sensitive
+
+| Group | People | SGD accuracy (%) | DP1 accuracy (%) | Loss eps1 (pp) | Loss eps4 (pp) | Loss eps8 (pp) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Male | 14826 | 80.48 +/- 0.29 | 79.44 +/- 0.13 | +1.04 +/- 0.25 | +1.03 +/- 0.23 | +1.01 +/- 0.21 |
+| Female | 15438 | 73.63 +/- 0.14 | 72.18 +/- 0.08 | +1.45 +/- 0.15 | +1.47 +/- 0.20 | +1.44 +/- 0.16 |
+| White alone | 18889 | 77.25 +/- 0.10 | 76.04 +/- 0.11 | +1.20 +/- 0.05 | +1.22 +/- 0.08 | +1.20 +/- 0.04 |
+| Black or African American alone | 1500 | 79.53 +/- 0.26 | 78.51 +/- 0.20 | +1.03 +/- 0.42 | +0.85 +/- 0.34 | +0.96 +/- 0.46 |
+| American Indian alone | 202 | 69.90 +/- 1.01 | 66.73 +/- 0.65 | +3.17 +/- 1.47 | +2.97 +/- 1.53 | +2.87 +/- 1.23 |
+| Alaska Native alone | 2 | 100.00 +/- 0.00 | 100.00 +/- 0.00 | +0.00 +/- 0.00 | +0.00 +/- 0.00 | +0.00 +/- 0.00 |
+| AIAN specified/unspecified; no other races | 81 | 80.49 +/- 0.55 | 79.75 +/- 1.10 | +0.74 +/- 1.41 | -0.25 +/- 1.03 | +0.25 +/- 0.55 |
+| Asian alone | 5017 | 76.39 +/- 0.25 | 75.08 +/- 0.07 | +1.31 +/- 0.25 | +1.32 +/- 0.24 | +1.32 +/- 0.25 |
+| Native Hawaiian / Other Pacific Islander alone | 95 | 82.95 +/- 2.02 | 82.53 +/- 0.94 | +0.42 +/- 2.18 | +0.42 +/- 2.18 | +0.84 +/- 2.40 |
+| Some Other Race alone | 3299 | 75.28 +/- 0.43 | 73.92 +/- 0.27 | +1.36 +/- 0.55 | +1.41 +/- 0.28 | +1.29 +/- 0.49 |
+| Two or More Races | 1179 | 77.29 +/- 0.56 | 75.76 +/- 0.22 | +1.53 +/- 0.51 | +1.46 +/- 0.40 | +1.41 +/- 0.56 |
+
+
+At eps1, male accuracy loses 1.04 pp and female accuracy loses 1.45 pp. Among race groups with at least 500 people, Two or More Races has the largest mean loss (1.53 pp). These are observed training-seed averages, not a claim that a particular group always loses most.
+
+Race categories are original ACS categories; none were merged. Small groups remain visible. In particular, the two-person Alaska Native-alone group has no actual positives, so its 100% accuracy does not establish good predictive performance.
+
+### What each fairness gap asks
+
+| Metric | Rates that should match | Reported gap |
+| --- | --- | --- |
+| Accuracy parity | Accuracy across groups | max accuracy - min accuracy |
+| Independence | Predicted-positive / selection rate | max selection rate - min selection rate |
+| Separation (equalized odds) | TPR and FPR separately | larger of TPR range and FPR range |
+| Binary sufficiency | PPV and NPV separately | larger of PPV range and NPV range |
+
+
+For every gap, **0 means parity and smaller means closer to that fairness criterion**. This binary sufficiency diagnostic concerns thresholded predictions, not full score calibration. Gaps are computed within each seed before averaging. They need not equal the gap between averaged rates.
+
+### Did DP improve or worsen these gaps?
+
+Each level is mean +/- sample SD in pp. The signed change is DP1 minus matched SGD: **positive means a larger gap; negative means a smaller gap**. Sex uses both groups. Headline race uses only the fixed five groups with development n>=500.
+
+#### include_sensitive
+
+| Comparison | Metric | SGD | DP eps1 | DP eps4 | DP eps8 | DP1 change (pp) | Smaller / larger gap seeds |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Sex | Accuracy parity | 6.86 +/- 0.31 | 6.17 +/- 0.48 | 6.25 +/- 0.45 | 6.09 +/- 0.52 | -0.69 +/- 0.68 | 4 / 1 of 5 |
+| Sex | Independence | 7.82 +/- 2.34 | 6.45 +/- 1.26 | 6.41 +/- 1.12 | 6.57 +/- 1.11 | -1.37 +/- 2.33 | 3 / 2 of 5 |
+| Sex | Separation | 7.75 +/- 3.00 | 5.03 +/- 0.71 | 5.04 +/- 0.64 | 5.01 +/- 0.58 | -2.72 +/- 2.98 | 5 / 0 of 5 |
+| Sex | Binary sufficiency | 9.29 +/- 0.46 | 8.72 +/- 0.76 | 8.80 +/- 0.69 | 8.61 +/- 0.75 | -0.57 +/- 0.60 | 4 / 1 of 5 |
+| Race n>=500 | Accuracy parity | 2.85 +/- 0.54 | 4.91 +/- 0.48 | 4.76 +/- 0.29 | 4.71 +/- 0.43 | +2.06 +/- 0.53 | 0 / 5 of 5 |
+| Race n>=500 | Independence | 17.83 +/- 0.99 | 25.26 +/- 1.07 | 25.00 +/- 0.92 | 25.09 +/- 1.11 | +7.42 +/- 1.36 | 0 / 5 of 5 |
+| Race n>=500 | Separation | 16.72 +/- 2.77 | 31.24 +/- 1.44 | 30.79 +/- 1.16 | 30.96 +/- 1.44 | +14.52 +/- 3.18 | 0 / 5 of 5 |
+| Race n>=500 | Binary sufficiency | 4.64 +/- 0.95 | 4.28 +/- 0.43 | 4.14 +/- 0.25 | 4.21 +/- 0.21 | -0.36 +/- 0.59 | 4 / 1 of 5 |
+
+
+#### exclude_sensitive
+
+| Comparison | Metric | SGD | DP eps1 | DP eps4 | DP eps8 | DP1 change (pp) | Smaller / larger gap seeds |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Sex | Accuracy parity | 6.85 +/- 0.39 | 7.27 +/- 0.09 | 7.30 +/- 0.06 | 7.29 +/- 0.07 | +0.41 +/- 0.38 | 1 / 4 of 5 |
+| Sex | Independence | 0.71 +/- 0.15 | 0.82 +/- 0.16 | 0.80 +/- 0.20 | 0.82 +/- 0.16 | +0.11 +/- 0.28 | 2 / 3 of 5 |
+| Sex | Separation | 12.09 +/- 0.21 | 11.17 +/- 0.35 | 11.18 +/- 0.30 | 11.22 +/- 0.31 | -0.91 +/- 0.53 | 5 / 0 of 5 |
+| Sex | Binary sufficiency | 12.60 +/- 0.20 | 11.98 +/- 0.16 | 11.99 +/- 0.10 | 12.01 +/- 0.13 | -0.61 +/- 0.32 | 5 / 0 of 5 |
+| Race n>=500 | Accuracy parity | 4.25 +/- 0.59 | 4.59 +/- 0.38 | 4.80 +/- 0.20 | 4.58 +/- 0.38 | +0.34 +/- 0.87 | 2 / 3 of 5 |
+| Race n>=500 | Independence | 17.35 +/- 1.17 | 19.74 +/- 0.44 | 19.77 +/- 0.27 | 19.65 +/- 0.34 | +2.39 +/- 1.01 | 0 / 5 of 5 |
+| Race n>=500 | Separation | 19.86 +/- 1.65 | 24.81 +/- 0.83 | 25.07 +/- 0.31 | 24.68 +/- 0.71 | +4.95 +/- 1.56 | 0 / 5 of 5 |
+| Race n>=500 | Binary sufficiency | 6.93 +/- 1.50 | 5.98 +/- 0.25 | 6.24 +/- 0.19 | 6.15 +/- 0.23 | -0.95 +/- 1.44 | 4 / 1 of 5 |
+
+
+- include_sensitive, sex, DP1 versus SGD: smaller mean gaps: accuracy parity, independence, separation, binary sufficiency.
+
+- include_sensitive, headline race, DP1 versus SGD: smaller mean gaps: binary sufficiency; larger mean gaps: accuracy parity, independence, separation.
+
+- exclude_sensitive, sex, DP1 versus SGD: smaller mean gaps: separation, binary sufficiency; larger mean gaps: accuracy parity, independence.
+
+- exclude_sensitive, headline race, DP1 versus SGD: smaller mean gaps: binary sufficiency; larger mean gaps: accuracy parity, independence, separation.
+
+The answer therefore depends on the fairness definition and group comparison.
+
+### Which actual rates drive the change? Primary setting, SGD -> DP1
+
+Entries show mean rates in percent. Selection is the fraction predicted positive. TPR is the fraction of actual positives correctly predicted positive. FPR is the fraction of actual negatives incorrectly predicted positive. PPV is the fraction of predicted positives that are actually positive. NPV is the fraction of predicted negatives that are actually negative. For predictive performance, higher TPR/PPV/NPV and lower FPR are desirable; for the corresponding fairness criterion, groups should have matching rates.
+
+| Group | Selection | TPR | FPR | PPV | NPV |
+| --- | --- | --- | --- | --- | --- |
+| Male | 64.24 -> 72.25 | 86.69 -> 91.37 | 28.31 -> 41.66 | 83.14 -> 77.83 | 77.41 -> 80.85 |
+| Female | 56.42 -> 65.80 | 78.94 -> 86.36 | 31.37 -> 42.93 | 73.84 -> 69.11 | 75.02 -> 79.02 |
+| White alone | 59.02 -> 66.83 | 82.31 -> 87.76 | 28.54 -> 39.44 | 79.20 -> 74.45 | 75.87 -> 79.07 |
+| Black or African American alone | 48.39 -> 54.19 | 78.10 -> 82.88 | 19.84 -> 26.61 | 79.22 -> 74.95 | 79.46 -> 81.71 |
+| Asian alone | 64.01 -> 73.63 | 84.71 -> 91.29 | 34.48 -> 48.43 | 77.92 -> 72.90 | 75.50 -> 80.59 |
+| Some Other Race alone | 66.17 -> 79.44 | 86.19 -> 93.93 | 36.33 -> 57.86 | 78.09 -> 70.75 | 76.04 -> 82.33 |
+| Two or More Races | 64.99 -> 73.99 | 85.64 -> 91.92 | 36.05 -> 48.88 | 77.03 -> 72.49 | 76.91 -> 81.87 |
+
+
+- Male versus female: the absolute difference between mean TPR rates changes from 7.75 to 5.00 pp.
+
+- Male versus female: the absolute difference between mean FPR rates changes from 3.06 to 1.27 pp.
+
+- White-alone versus Black-alone: the absolute difference between mean TPR rates changes from 4.21 to 4.87 pp.
+
+- White-alone versus Black-alone: the absolute difference between mean FPR rates changes from 8.69 to 12.82 pp.
+
+Both sex groups have higher TPR **and higher FPR** under DP1. The smaller sex separation gap therefore coexists with more false positives and lower accuracy. White-alone and Black-alone are one concrete pair, not a reference population or the entire multi-race comparison. The headline race separation range covers all five supported groups.
+
+**Full group tables:** [GROUP_COMPARISONS.md](GROUP_COMPARISONS.md) includes both policies, all three budgets, all nine race groups and all 18 race-by-sex intersections, with denominator support, rate levels, and paired changes.
+
 ## What persists across the 5 seeds
 
 - **include_sensitive:** adding clipping to matched non-private Poisson SGD changes mean accuracy by -2.055 pp; DP1 minus the clipped/no-noise control is +0.005 pp. These contrasts identify where the measured utility changes occur.
@@ -134,18 +265,6 @@ The two non-private Poisson controls share sample streams; DP draws fresh sample
 
 
 Differences are include_sensitive minus exclude_sensitive, in percentage points. Positive accuracy difference favors inclusion; positive gap difference indicates more disparity on that criterion. All budgets and controls are retained in the full feature-policy CSV.
-
-## Which sex group loses more accuracy? DP1 example
-
-| feature_policy | Group | mean | std | valid_seeds |
-| --- | --- | --- | --- | --- |
-| exclude_sensitive | Male | 1.04141 | 0.2455 | 5 |
-| exclude_sensitive | Female | 1.45226 | 0.1466 | 5 |
-| include_sensitive | Male | 2.25685 | 0.85192 | 5 |
-| include_sensitive | Female | 1.56756 | 0.72639 | 5 |
-
-
-Values are accuracy losses in percentage points versus each group's matched SGD seed. Observed ordering: exclude_sensitive: larger mean loss for Female; include_sensitive: larger mean loss for Male. Full race/intersection losses and per-run loss disparities are retained in the group-loss CSVs.
 
 ## ESR diagnostic example: include_sensitive, DP epsilon1
 
