@@ -4,7 +4,7 @@ The project source is `reports/progress_report/main.tex`. Its figures and biblio
 
 ## Option 1: upload refreshed files
 
-Works without a paid integration. Run `python scripts/build_progress_report.py`, extract `output/overleaf/progress_report_overleaf.zip`, and upload the changed source files/figures into the existing Overleaf project, replacing the old copies. Or upload the ZIP as a new project. Compile `main.tex` with pdfLaTeX. No experiment reruns are needed.
+Works without a paid integration. Run `python scripts/build_progress_report.py`, extract `reports/progress_report/progress_report_overleaf.zip`, and upload the changed source files/figures into the existing Overleaf project, replacing the old copies. Or upload the ZIP as a new project. Compile `main.tex` with pdfLaTeX. No experiment reruns are needed.
 
 ## Option 2: Overleaf Git integration
 

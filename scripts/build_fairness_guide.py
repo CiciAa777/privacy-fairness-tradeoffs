@@ -22,9 +22,9 @@ import numpy as np
 sys.path.insert(0, str(ROOT))
 from src.metrics import binary_metrics
 
-OUT = ROOT / 'figures/fairness_guide'
+OUT = ROOT / 'reports/fairness_guide/figures'
 OUT.mkdir(parents=True, exist_ok=True)
-PDF = ROOT / 'output/pdf/fairness_metric_guide.pdf'
+PDF = ROOT / 'reports/fairness_guide/fairness_metric_guide.pdf'
 PDF.parent.mkdir(parents=True, exist_ok=True)
 
 # The same two hypothetical confusion matrices are used in every image.
@@ -118,4 +118,4 @@ with PdfPages(PDF) as pdf:
         pdf.savefig(fig)
         plt.close(fig)
 
-print('Built four illustrative PNGs under figures/fairness_guide and output/pdf/fairness_metric_guide.pdf')
+print('Built four illustrative PNGs and fairness_metric_guide.pdf under reports/fairness_guide/')

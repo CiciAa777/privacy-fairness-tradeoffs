@@ -15,7 +15,7 @@ We calculate a rate for each group, then a **gap = highest group rate minus lowe
 
 ## 1. Accuracy parity: equal correctness
 
-![Illustrative accuracy-parity comparison](figures/fairness_guide/accuracy_parity.png)
+![Illustrative accuracy-parity comparison](figures/accuracy_parity.png)
 
 **Ask:** "Is the model equally often correct for each group?"
 
@@ -25,7 +25,7 @@ Accuracy is `(TP + TN) / n`. The accuracy gap compares groups **within one model
 
 ## 2. Independence: equal positive-prediction rates
 
-![Illustrative independence comparison](figures/fairness_guide/independence.png)
+![Illustrative independence comparison](figures/independence.png)
 
 **Ask:** "Out of everyone in each group, how many are predicted positive?"
 
@@ -33,7 +33,7 @@ The selection rate is `(TP + FP) / n`. In the example, both rates are 50%, so th
 
 ## 3. Separation: start from reality
 
-![Illustrative separation comparison](figures/fairness_guide/separation.png)
+![Illustrative separation comparison](figures/separation.png)
 
 **Ask:** "For people with the same real label, does the model behave similarly across groups?"
 
@@ -44,7 +44,7 @@ Our separation gap is `max(TPR gap, FPR gap)`. The example has gaps of 5 and 13.
 
 ## 4. Sufficiency: start from the prediction
 
-![Illustrative binary-sufficiency comparison](figures/fairness_guide/sufficiency.png)
+![Illustrative binary-sufficiency comparison](figures/sufficiency.png)
 
 **Ask:** "When the model gives the same prediction, is it equally trustworthy for each group?"
 
@@ -82,4 +82,4 @@ The group-loss plot displays only race groups with at least 500 development reco
 .\.venv\Scripts\python.exe scripts\build_fairness_guide.py
 ```
 
-Outputs: four PNGs under `figures/fairness_guide/` and a four-page printable guide at `output/pdf/fairness_metric_guide.pdf`. No training or test records are read.
+Outputs: four PNGs under `reports/fairness_guide/figures/` and a [four-page printable guide](fairness_metric_guide.pdf) beside this README. No training or test records are read.

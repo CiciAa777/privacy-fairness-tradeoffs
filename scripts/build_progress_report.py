@@ -7,8 +7,8 @@ import re
 
 ROOT=Path(__file__).resolve().parents[1]
 SOURCE=ROOT/'reports/progress_report'
-BUILD=SOURCE/'build'
-BUILD.mkdir(exist_ok=True)
+BUILD=ROOT/'tmp/progress_report_build'
+BUILD.mkdir(parents=True,exist_ok=True)
 (SOURCE/'figures').mkdir(exist_ok=True)
 FIGURES=['accuracy_vs_epsilon.png','group_loss_vs_epsilon.png','fairness_gaps.png']
 for name in FIGURES:
@@ -26,9 +26,9 @@ def run(command,cwd):
     result=subprocess.run(command,cwd=cwd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,encoding='utf-8',errors='replace')
     if result.returncode:
         print(result.stdout[-6000:])
-        raise RuntimeError('LaTeX build failed; inspect reports/progress_report/build/main.log')
+        raise RuntimeError('LaTeX build failed; inspect tmp/progress_report_build/main.log')
 
-command=[latex,'-interaction=nonstopmode','-halt-on-error','-output-directory=build','main.tex']
+command=[latex,'-interaction=nonstopmode','-halt-on-error',f'-output-directory={BUILD}','main.tex']
 run(command,SOURCE)
 if '\\bibdata{' in (BUILD/'main.aux').read_text(encoding='utf-8'):
     shutil.copy2(SOURCE/'references.bib',BUILD/'references.bib')
@@ -41,15 +41,14 @@ if not page_count or int(page_count.group(1)) != 2:
 log=(BUILD/'main.log').read_text(encoding='utf-8',errors='replace')
 if 'Overfull \\hbox' in log or 'Overfull \\vbox' in log or 'There were undefined references' in log:
     raise RuntimeError('Resolve layout overflow or undefined references before packaging')
-outpdf=ROOT/'output/pdf';outpdf.mkdir(parents=True,exist_ok=True)
-shutil.copy2(BUILD/'main.pdf',outpdf/'progress_report.pdf')
-outzip=ROOT/'output/overleaf';outzip.mkdir(parents=True,exist_ok=True)
-with zipfile.ZipFile(outzip/'progress_report_overleaf.zip','w',zipfile.ZIP_DEFLATED) as archive:
-    for name in ['main.tex','references.bib','README.md','OVERLEAF_SYNC.md']:
+shutil.copy2(BUILD/'main.pdf',SOURCE/'progress_report.pdf')
+with zipfile.ZipFile(SOURCE/'progress_report_overleaf.zip','w',zipfile.ZIP_DEFLATED) as archive:
+    for name in ['main.tex','references.bib','OVERLEAF_SYNC.md']:
         archive.write(SOURCE/name,name)
+    archive.writestr('README.md', '# Progress report for Overleaf\n\n'
+                     'Compile main.tex with pdfLaTeX. The report has two pages, '
+                     '11pt text, single spacing, and one-inch margins.\n\n'
+                     'All required figures are local. No experiment data are needed.\n')
     for name in FIGURES:
         archive.write(SOURCE/'figures'/name,'figures/'+name)
-    archive.write(ROOT/'fairness_metric_guide.md','fairness_metric_guide.md')
-    for path in sorted((ROOT/'figures/fairness_guide').glob('*.png')):
-        archive.write(path,'figures/fairness_guide/'+path.name)
-print('Built output/pdf/progress_report.pdf and output/overleaf/progress_report_overleaf.zip')
+print('Built reports/progress_report/progress_report.pdf and progress_report_overleaf.zip')

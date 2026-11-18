@@ -10,15 +10,17 @@ We study whether DP-SGD changes employment-prediction accuracy disproportionatel
 | [02_baseline.ipynb](notebooks/02_baseline.ipynb) | Training settings, loss curves, majority comparison, and development accuracy/fairness results |
 | [03_dp_sgd.ipynb](notebooks/03_dp_sgd.ipynb) | Completed DP-SGD pilots, privacy budgets, learning curves, and group comparisons |
 | [dp_training_log.md](dp_training_log.md) | Exact DP training/accounting settings, preliminary results, and interpretation limits |
-| [fairness_metric_guide.md](fairness_metric_guide.md) | Four illustrated metric explanations, privacy-budget direction, and original Census race categories |
+| [Visual metric guide](reports/fairness_guide/README.md) | Four illustrated metric explanations, privacy-budget direction, and original Census race categories |
 
 **Progress report:** November 18, 2026. **Final report:** December 7, 2026.
 
 ## Progress report for Overleaf
 
-The LaTeX report by Xiyin Xu and Shannon Saad is ready as a standalone [Overleaf ZIP](output/overleaf/progress_report_overleaf.zip), with a compiled [PDF preview](output/pdf/progress_report.pdf). In Overleaf, choose **New Project → Upload Project**, upload the ZIP, and compile `main.tex` using **pdfLaTeX**.
+The LaTeX report by Xiyin Xu and Shannon Saad is ready as a standalone [Overleaf ZIP](reports/progress_report/progress_report_overleaf.zip), with a compiled [PDF preview](reports/progress_report/progress_report.pdf). In Overleaf, choose **New Project → Upload Project**, upload the ZIP, and compile `main.tex` using **pdfLaTeX**.
 
-Editable sources are in [reports/progress_report](reports/progress_report/README.md). Rebuild the PDF and ZIP with `python scripts/build_progress_report.py` when TeX Live/MiKTeX is installed. The original partner Markdown draft and plots are preserved.
+All report material is under `reports/`: [progress_report/](reports/progress_report/README.md) contains the current LaTeX source, PDF, Overleaf ZIP, and an `archive/` for the older extended draft; [fairness_guide/](reports/fairness_guide/README.md) contains the illustrated explanations and printable guide. Temporary build files go under ignored `tmp/`. There is no separate `output/` folder.
+
+Rebuild the report PDF and ZIP with `python scripts/build_progress_report.py` when TeX Live/MiKTeX is installed. The original partner Markdown draft and experiment plots are preserved.
 
 Recommended workflow:
 
