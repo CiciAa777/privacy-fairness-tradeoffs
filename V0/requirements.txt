@@ -1,0 +1,13 @@
+# Shared environment for data preparation, notebooks, SGD and DP-SGD.
+folktables==0.0.12
+numpy
+pandas
+scipy
+scikit-learn
+joblib
+torch>=2.6
+matplotlib
+opacus==1.6.0
+nbformat
+nbclient
+ipykernel

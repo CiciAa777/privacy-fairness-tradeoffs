@@ -8,4 +8,8 @@ __pycache__/
 *.pt
 results/baseline/development_predictions.csv
 results/dp_pilot/**/development_predictions.csv
+**/development_predictions.csv
+results/controlled_v2/cache/
+results/controlled_v2/**/.running
+results/controlled_v2/**/failure.json
 /tmp/
